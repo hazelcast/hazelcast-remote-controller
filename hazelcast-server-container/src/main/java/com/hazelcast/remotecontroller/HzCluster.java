@@ -19,7 +19,7 @@ public class HzCluster {
     private String xmlConfig;
     private Config config;
 
-    private AtomicReference<HazelcastInstance> master;
+    private final AtomicReference<HazelcastInstance> master = new AtomicReference<>();
 
     private final ConcurrentHashMap<String, HazelcastInstance> instances = new ConcurrentHashMap<>();
 
@@ -75,5 +75,19 @@ public class HzCluster {
 
     public void removeInstance(String memberId) {
         this.instances.remove(memberId);
+    }
+
+    public void shutdown() {
+        for (HazelcastInstance instance: this.instances.values()) {
+            instance.getLifecycleService().shutdown();
+        }
+        this.instances.clear();
+    }
+
+    public void terminate() {
+        for (HazelcastInstance instance: this.instances.values()) {
+            instance.getLifecycleService().terminate();
+        }
+        this.instances.clear();
     }
 }

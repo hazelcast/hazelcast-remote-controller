@@ -221,6 +221,8 @@ class Client(Iface):
     iprot.readMessageEnd()
     if result.success is not None:
       return result.success
+    if result.serverException is not None:
+      raise result.serverException
     raise TApplicationException(TApplicationException.MISSING_RESULT, "createCluster failed: unknown result")
 
   def startMember(self, clusterId, delay):
@@ -595,6 +597,9 @@ class Processor(Iface, TProcessor):
       msg_type = TMessageType.REPLY
     except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
       raise
+    except ServerException as serverException:
+      msg_type = TMessageType.REPLY
+      result.serverException = serverException
     except Exception as ex:
       msg_type = TMessageType.EXCEPTION
       logging.exception(ex)
@@ -1171,14 +1176,17 @@ class createCluster_result(object):
   """
   Attributes:
    - success
+   - serverException
   """
 
   thrift_spec = (
     (0, TType.STRUCT, 'success', (Cluster, Cluster.thrift_spec), None, ), # 0
+    (1, TType.STRUCT, 'serverException', (ServerException, ServerException.thrift_spec), None, ), # 1
   )
 
-  def __init__(self, success=None,):
+  def __init__(self, success=None, serverException=None,):
     self.success = success
+    self.serverException = serverException
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1195,6 +1203,12 @@ class createCluster_result(object):
           self.success.read(iprot)
         else:
           iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.serverException = ServerException()
+          self.serverException.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1209,6 +1223,10 @@ class createCluster_result(object):
       oprot.writeFieldBegin('success', TType.STRUCT, 0)
       self.success.write(oprot)
       oprot.writeFieldEnd()
+    if self.serverException is not None:
+      oprot.writeFieldBegin('serverException', TType.STRUCT, 1)
+      self.serverException.write(oprot)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1219,6 +1237,7 @@ class createCluster_result(object):
   def __hash__(self):
     value = 17
     value = (value * 31) ^ hash(self.success)
+    value = (value * 31) ^ hash(self.serverException)
     return value
 
   def __repr__(self):

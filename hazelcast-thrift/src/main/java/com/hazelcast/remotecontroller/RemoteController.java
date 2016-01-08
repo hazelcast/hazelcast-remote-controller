@@ -45,7 +45,7 @@ public class RemoteController {
 
     public boolean exit() throws org.apache.thrift.TException;
 
-    public Cluster createCluster(String hzVersion, String xmlconfig) throws org.apache.thrift.TException;
+    public Cluster createCluster(String hzVersion, String xmlconfig) throws ServerException, org.apache.thrift.TException;
 
     public Member startMember(String clusterId, int delay) throws org.apache.thrift.TException;
 
@@ -179,7 +179,7 @@ public class RemoteController {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "exit failed: unknown result");
     }
 
-    public Cluster createCluster(String hzVersion, String xmlconfig) throws org.apache.thrift.TException
+    public Cluster createCluster(String hzVersion, String xmlconfig) throws ServerException, org.apache.thrift.TException
     {
       send_createCluster(hzVersion, xmlconfig);
       return recv_createCluster();
@@ -193,12 +193,15 @@ public class RemoteController {
       sendBase("createCluster", args);
     }
 
-    public Cluster recv_createCluster() throws org.apache.thrift.TException
+    public Cluster recv_createCluster() throws ServerException, org.apache.thrift.TException
     {
       createCluster_result result = new createCluster_result();
       receiveBase(result, "createCluster");
       if (result.isSetSuccess()) {
         return result.success;
+      }
+      if (result.serverException != null) {
+        throw result.serverException;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "createCluster failed: unknown result");
     }
@@ -529,7 +532,7 @@ public class RemoteController {
         prot.writeMessageEnd();
       }
 
-      public Cluster getResult() throws org.apache.thrift.TException {
+      public Cluster getResult() throws ServerException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -937,7 +940,11 @@ public class RemoteController {
 
       public createCluster_result getResult(I iface, createCluster_args args) throws org.apache.thrift.TException {
         createCluster_result result = new createCluster_result();
-        result.success = iface.createCluster(args.hzVersion, args.xmlconfig);
+        try {
+          result.success = iface.createCluster(args.hzVersion, args.xmlconfig);
+        } catch (ServerException serverException) {
+          result.serverException = serverException;
+        }
         return result;
       }
     }
@@ -1318,6 +1325,12 @@ public class RemoteController {
             byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;
             org.apache.thrift.TBase msg;
             createCluster_result result = new createCluster_result();
+            if (e instanceof ServerException) {
+                        result.serverException = (ServerException) e;
+                        result.setServerExceptionIsSet(true);
+                        msg = result;
+            }
+             else 
             {
               msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;
               msg = (org.apache.thrift.TBase)new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
@@ -4054,6 +4067,7 @@ public class RemoteController {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("createCluster_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField SERVER_EXCEPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("serverException", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -4062,10 +4076,12 @@ public class RemoteController {
     }
 
     public Cluster success; // required
+    public ServerException serverException; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      SERVER_EXCEPTION((short)1, "serverException");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -4082,6 +4098,8 @@ public class RemoteController {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // SERVER_EXCEPTION
+            return SERVER_EXCEPTION;
           default:
             return null;
         }
@@ -4127,6 +4145,8 @@ public class RemoteController {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Cluster.class)));
+      tmpMap.put(_Fields.SERVER_EXCEPTION, new org.apache.thrift.meta_data.FieldMetaData("serverException", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(createCluster_result.class, metaDataMap);
     }
@@ -4135,10 +4155,12 @@ public class RemoteController {
     }
 
     public createCluster_result(
-      Cluster success)
+      Cluster success,
+      ServerException serverException)
     {
       this();
       this.success = success;
+      this.serverException = serverException;
     }
 
     /**
@@ -4147,6 +4169,9 @@ public class RemoteController {
     public createCluster_result(createCluster_result other) {
       if (other.isSetSuccess()) {
         this.success = new Cluster(other.success);
+      }
+      if (other.isSetServerException()) {
+        this.serverException = new ServerException(other.serverException);
       }
     }
 
@@ -4157,6 +4182,7 @@ public class RemoteController {
     @Override
     public void clear() {
       this.success = null;
+      this.serverException = null;
     }
 
     public Cluster getSuccess() {
@@ -4183,6 +4209,30 @@ public class RemoteController {
       }
     }
 
+    public ServerException getServerException() {
+      return this.serverException;
+    }
+
+    public createCluster_result setServerException(ServerException serverException) {
+      this.serverException = serverException;
+      return this;
+    }
+
+    public void unsetServerException() {
+      this.serverException = null;
+    }
+
+    /** Returns true if field serverException is set (has been assigned a value) and false otherwise */
+    public boolean isSetServerException() {
+      return this.serverException != null;
+    }
+
+    public void setServerExceptionIsSet(boolean value) {
+      if (!value) {
+        this.serverException = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -4193,6 +4243,14 @@ public class RemoteController {
         }
         break;
 
+      case SERVER_EXCEPTION:
+        if (value == null) {
+          unsetServerException();
+        } else {
+          setServerException((ServerException)value);
+        }
+        break;
+
       }
     }
 
@@ -4200,6 +4258,9 @@ public class RemoteController {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case SERVER_EXCEPTION:
+        return getServerException();
 
       }
       throw new IllegalStateException();
@@ -4214,6 +4275,8 @@ public class RemoteController {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case SERVER_EXCEPTION:
+        return isSetServerException();
       }
       throw new IllegalStateException();
     }
@@ -4240,6 +4303,15 @@ public class RemoteController {
           return false;
       }
 
+      boolean this_present_serverException = true && this.isSetServerException();
+      boolean that_present_serverException = true && that.isSetServerException();
+      if (this_present_serverException || that_present_serverException) {
+        if (!(this_present_serverException && that_present_serverException))
+          return false;
+        if (!this.serverException.equals(that.serverException))
+          return false;
+      }
+
       return true;
     }
 
@@ -4251,6 +4323,11 @@ public class RemoteController {
       list.add(present_success);
       if (present_success)
         list.add(success);
+
+      boolean present_serverException = true && (isSetServerException());
+      list.add(present_serverException);
+      if (present_serverException)
+        list.add(serverException);
 
       return list.hashCode();
     }
@@ -4269,6 +4346,16 @@ public class RemoteController {
       }
       if (isSetSuccess()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, other.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetServerException()).compareTo(other.isSetServerException());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetServerException()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.serverException, other.serverException);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4298,6 +4385,14 @@ public class RemoteController {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("serverException:");
+      if (this.serverException == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.serverException);
       }
       first = false;
       sb.append(")");
@@ -4355,6 +4450,15 @@ public class RemoteController {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // SERVER_EXCEPTION
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.serverException = new ServerException();
+                struct.serverException.read(iprot);
+                struct.setServerExceptionIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -4373,6 +4477,11 @@ public class RemoteController {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.serverException != null) {
+          oprot.writeFieldBegin(SERVER_EXCEPTION_FIELD_DESC);
+          struct.serverException.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -4396,20 +4505,31 @@ public class RemoteController {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetServerException()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           struct.success.write(oprot);
+        }
+        if (struct.isSetServerException()) {
+          struct.serverException.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, createCluster_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = new Cluster();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.serverException = new ServerException();
+          struct.serverException.read(iprot);
+          struct.setServerExceptionIsSet(true);
         }
       }
     }

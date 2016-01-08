@@ -42,17 +42,17 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     @Override
     public boolean terminateMember(String clusterId, String memberId, int delay) throws TException {
-        return false;
+        return clusterManager.terminateMember(clusterId, memberId, delay);
     }
 
     @Override
     public boolean shutdownCluster(String clusterId, int delay) throws TException {
-        return false;
+        return clusterManager.shutdownCluster(clusterId, delay);
     }
 
     @Override
     public boolean terminateCluster(String clusterId, int delay) throws TException {
-        return false;
+        return clusterManager.terminateCluster(clusterId, delay);
     }
 
     @Override

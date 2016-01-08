@@ -20,14 +20,17 @@ enum Lang{
     JRUBY = 4
 }
 
+exception ServerException {
+    1:string message;
+}
 service RemoteController {
     bool ping();
     bool clean();
     bool exit();
 
-    Cluster createCluster(1:string hzVersion, 2:string xmlconfig);
+    Cluster createCluster(1:string hzVersion, 2:string xmlconfig) throws (1:ServerException serverException);
 
-    Member startMember(1:string clusterId, 2:i32 delay);
+    Member startMember(1:string clusterId, 2:i32 delay) throws (1:ServerException serverException);
     bool shutdownMember(1:string clusterId, 2:string memberId, 3:i32 delay);
     bool terminateMember(1:string clusterId, 2:string memberId, 3:i32 delay);
 
