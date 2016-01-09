@@ -22,7 +22,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     @Override
     public boolean exit() throws TException {
-        return false;
+        return clusterManager.clean();
     }
 
     @Override

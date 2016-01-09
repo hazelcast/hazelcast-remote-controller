@@ -1,6 +1,6 @@
 import unittest
 
-from hazelcast.unittest.hzunittest import HzRemoteController
+from hzrc.client import HzRemoteController
 
 
 class RemoteControllerTestCase(unittest.TestCase):

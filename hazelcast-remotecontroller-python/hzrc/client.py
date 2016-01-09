@@ -4,11 +4,11 @@ from thrift import Thrift
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
-from hazelcast.remotecontroller import RemoteController
+import RemoteController
 
 
 class HzRemoteController(RemoteController.Iface):
-    logger = logging.getLogger("HzUnitTest")
+    logger = logging.getLogger("HzRemoteController")
 
     def __init__(self, host, port):
         try:
@@ -22,7 +22,7 @@ class HzRemoteController(RemoteController.Iface):
             # Connect!
             transport.open()
         except Thrift.TException as tx:
-            self.logger('%s' % tx.message)
+            self.logger.warn('%s' % tx.message)
 
     def terminateMember(self, clusterId, memberId, delay):
         return self.remote_controller.terminateMember(clusterId, memberId, delay)

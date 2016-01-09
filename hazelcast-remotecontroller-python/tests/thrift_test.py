@@ -1,9 +1,10 @@
 from thrift import Thrift
+from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
 
-from hazelcast.remotecontroller import RemoteController
+from hzrc import RemoteController
+
 try:
 
     # Make socket

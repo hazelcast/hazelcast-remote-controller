@@ -15,7 +15,7 @@ case ${GEN_LANG} in
     py)
         thrift -r --gen py:new_style,utf8strings -out ${PYTHON_PATH} ${THRIFT_FILE}
         ;;
-    js)
+    nodejs)
         thrift -r --gen js:node -out ../nodejs ${THRIFT_FILE}
         ;;
     csharp)

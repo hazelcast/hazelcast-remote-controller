@@ -1,5 +1,5 @@
 namespace java com.hazelcast.remotecontroller
-namespace py hazelcast.remotecontroller
+namespace py hzrc
 namespace csharp Hazelcast.RemoteController
 
 

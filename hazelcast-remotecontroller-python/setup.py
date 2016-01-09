@@ -1,15 +1,14 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # from codecs import open
-from os import path
-
-here = path.abspath(path.dirname(__file__))
+# from os import path
+# here = path.abspath(path.dirname(__file__))
 
 setup(
         name='hazelcast-remote-controller',
         version='0.1',
         description='Hazelcast Remote Controller Python Library',
-        license = 'Apache License 2.0',
+        license='Apache License 2.0',
         classifiers=[
             #   3 - Alpha
             #   4 - Beta
@@ -24,7 +23,8 @@ setup(
         ],
         keywords='hazelcast,client,python,test',
         # packages=find_packages(exclude=['examples', 'docs', 'tests']),
-        packages=['hazelcast', 'hazelcast.remotecontroller', ],
+        packages=['hzrc'],
+        # namespace_packages=['hazelcast'],
         # package_dir={'hazelcast': 'src'},
         install_requires=['thrift'],
 )
