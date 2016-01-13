@@ -11,8 +11,7 @@
     <name>Hazelcast Remote Controller</name>
     <description>A Remote Controller for Hazelcast Client Tests</description>
     <modules>
-        <module>hazelcast-server-container</module>
-        <module>hazelcast-thrift</module>
+        <module>server-container</module>
     </modules>
 
     <properties>
