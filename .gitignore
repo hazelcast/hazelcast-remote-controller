@@ -55,6 +55,9 @@ docs/_build/
 
 # IDEA
 .idea
+*.iml
+*.ipr
+*.iws
 
 #MAC
 .DS_Store
