@@ -54,5 +54,20 @@ class RemoteControllerTestCase(unittest.TestCase):
         self.assertTrue(res2)
         self.assertTrue(res3)
 
+    def test_multi_cluster(self):
+        cluster_1 = self.controller.createCluster(None, None)
+        member_1_1 = self.controller.startMember(cluster_1.id, None)
+        member_1_2 = self.controller.startMember(cluster_1.id, None)
+
+        cluster_2 = self.controller.createCluster(None, None)
+        member_2_1 = self.controller.startMember(cluster_2.id, None)
+        member_2_2 = self.controller.startMember(cluster_2.id, None)
+
+        self.assertTrue(member_2_1)
+        self.assertTrue(member_2_2)
+        self.assertTrue(member_1_1)
+        self.assertTrue(member_1_2)
+
+
 if __name__ == '__main__':
     unittest.main()

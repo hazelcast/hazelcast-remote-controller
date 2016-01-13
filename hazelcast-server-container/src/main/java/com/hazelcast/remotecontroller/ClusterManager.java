@@ -1,6 +1,7 @@
 package com.hazelcast.remotecontroller;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +34,8 @@ public class ClusterManager {
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster != null) {
             Config config = hzCluster.getConfig();
+
+            LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
 
             HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
             com.hazelcast.core.Member member = hzInstance.getCluster().getLocalMember();

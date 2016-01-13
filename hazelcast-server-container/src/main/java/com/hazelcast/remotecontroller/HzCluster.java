@@ -3,11 +3,14 @@ package com.hazelcast.remotecontroller;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.instance.GroupProperty;
+import com.hazelcast.nio.Address;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,7 +39,11 @@ public class HzCluster {
 
         //disable multicast
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true).addMember("localhost");
+//        config.getNetworkConfig().getJoin().getTcpIpConfig().setMembers(new ArrayList<>());
+
+        config.setProperty(GroupProperty.TCP_JOIN_PORT_TRY_COUNT, "1");
+
 
     }
 
@@ -58,13 +65,10 @@ public class HzCluster {
 
     public boolean addInstance(String id, HazelcastInstance hzInstance) {
         if (master.compareAndSet(null, hzInstance)) {
-            String memberAddress = null;
-            try {
-                memberAddress = hzInstance.getCluster().getLocalMember().getAddress().getInetSocketAddress().toString();
-            } catch (UnknownHostException e) {
-                return false;
-            }
+            Address address = hzInstance.getCluster().getLocalMember().getAddress();
+            String memberAddress = address.getHost() + ":" + address.getPort();
             config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(memberAddress);
+            config.getNetworkConfig().getJoin().getTcpIpConfig().setRequiredMember(memberAddress);
         }
         return this.instances.putIfAbsent(id, hzInstance) == null;
     }
