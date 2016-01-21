@@ -1,10 +1,15 @@
 package com.hazelcast.remotecontroller;
 
 import org.apache.logging.log4j.LogManager;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
+import org.apache.thrift.transport.TTransport;
 
 public class Main {
 
@@ -26,7 +31,10 @@ public class Main {
                     TServerTransport serverTransport = new TServerSocket(PORT);
                     TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
-                    LOG.info("Starting Remote Controller Server on port:"+PORT);
+                    LOG.info("Starting Remote Controller Server on port:" + PORT);
+
+                    //Set server event handler
+                    server.setServerEventHandler(new ServerEventHandler(handler));
                     server.serve();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -38,4 +46,36 @@ public class Main {
             x.printStackTrace();
         }
     }
+
+    private static class ServerEventHandler implements TServerEventHandler {
+
+        private RemoteControllerHandler handler;
+
+        public ServerEventHandler(RemoteControllerHandler handler) {
+
+            this.handler = handler;
+        }
+
+        public void preServe() {
+            LOG.info("TServerEventHandler.preServe - server starts accepting connections");
+        }
+
+        public ServerContext createContext(TProtocol input, TProtocol output) {
+            return null;
+        }
+
+        public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
+            try {
+                this.handler.clean();
+            } catch (TException e) {
+                LOG.error(e.getMessage());
+            }
+            LOG.info("TServerEventHandler.deleteContext client");
+        }
+
+        public void processContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
+        }
+
+    }
+
 }
