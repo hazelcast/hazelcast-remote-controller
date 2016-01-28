@@ -51,6 +51,8 @@ public class Main {
 
         private RemoteControllerHandler handler;
 
+        private Object mutex = new Object();
+
         public ServerEventHandler(RemoteControllerHandler handler) {
 
             this.handler = handler;
@@ -61,16 +63,21 @@ public class Main {
         }
 
         public ServerContext createContext(TProtocol input, TProtocol output) {
-            return null;
+            synchronized (mutex){
+                LOG.info("TServerEventHandler.createContext - new client context created");
+                return null;
+            }
         }
 
         public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
-            try {
-                this.handler.clean();
-            } catch (TException e) {
-                LOG.error(e.getMessage());
+            synchronized (mutex) {
+                try {
+                    this.handler.clean();
+                } catch (TException e) {
+                    LOG.error(e.getMessage());
+                }
+                LOG.info("TServerEventHandler.deleteContext client");
             }
-            LOG.info("TServerEventHandler.deleteContext client");
         }
 
         public void processContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
