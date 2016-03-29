@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.hazelcast</groupId>
-    <artifactId>hazelcast-remote-controller</artifactId>
+    <artifactId>hazelcast-remote-controller-root</artifactId>
     <packaging>pom</packaging>
     <version>0.1-SNAPSHOT</version>
-    <name>Hazelcast Remote Controller</name>
+    <name>Hazelcast Remote Controller Root</name>
     <description>A Remote Controller for Hazelcast Client Tests</description>
     <modules>
         <module>server-container</module>
