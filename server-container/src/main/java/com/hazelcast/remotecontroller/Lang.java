@@ -12,10 +12,10 @@ import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 public enum Lang implements org.apache.thrift.TEnum {
-  JS(1),
+  JAVASCRIPT(1),
   GROOVY(2),
-  JYTHON(3),
-  JRUBY(4);
+  PYTHON(3),
+  RUBY(4);
 
   private final int value;
 
@@ -37,13 +37,13 @@ public enum Lang implements org.apache.thrift.TEnum {
   public static Lang findByValue(int value) { 
     switch (value) {
       case 1:
-        return JS;
+        return JAVASCRIPT;
       case 2:
         return GROOVY;
       case 3:
-        return JYTHON;
+        return PYTHON;
       case 4:
-        return JRUBY;
+        return RUBY;
       default:
         return null;
     }

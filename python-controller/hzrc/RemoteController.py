@@ -2292,7 +2292,7 @@ class executeOnController_result(object):
   """
 
   thrift_spec = (
-    (0, TType.BOOL, 'success', None, None, ), # 0
+    (0, TType.STRUCT, 'success', (Response, Response.thrift_spec), None, ), # 0
   )
 
   def __init__(self, success=None,):
@@ -2308,8 +2308,9 @@ class executeOnController_result(object):
       if ftype == TType.STOP:
         break
       if fid == 0:
-        if ftype == TType.BOOL:
-          self.success = iprot.readBool()
+        if ftype == TType.STRUCT:
+          self.success = Response()
+          self.success.read(iprot)
         else:
           iprot.skip(ftype)
       else:
@@ -2323,8 +2324,8 @@ class executeOnController_result(object):
       return
     oprot.writeStructBegin('executeOnController_result')
     if self.success is not None:
-      oprot.writeFieldBegin('success', TType.BOOL, 0)
-      oprot.writeBool(self.success)
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

@@ -1,7 +1,6 @@
 package com.hazelcast.remotecontroller;
 
 import com.hazelcast.config.Config;
-import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +17,7 @@ public class ClusterManager {
     public ClusterManager() {
     }
 
-    public Cluster createCluster(String hzVersion, String xmlconfig) throws ServerException{
+    public Cluster createCluster(String hzVersion, String xmlconfig) throws ServerException {
         try {
             HzCluster hzCluster = new HzCluster(hzVersion, xmlconfig);
             this.clusterMap.putIfAbsent(hzCluster.getId(), hzCluster);
@@ -27,6 +26,10 @@ public class ClusterManager {
             LOG.warn(e);
             throw new ServerException(e.getMessage());
         }
+    }
+
+    public HzCluster getCluster(String clusterId) {
+        return clusterMap.get(clusterId);
     }
 
     public Member startMember(String clusterId) throws ServerException {
@@ -39,7 +42,7 @@ public class ClusterManager {
 
             HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
             com.hazelcast.core.Member member = hzInstance.getCluster().getLocalMember();
-            if(hzCluster.addInstance(member.getUuid(), hzInstance)) {
+            if (hzCluster.addInstance(member.getUuid(), hzInstance)) {
                 return new Member(member.getUuid(), member.getAddress().getHost(), member.getAddress().getPort());
             }
         }
@@ -47,7 +50,7 @@ public class ClusterManager {
     }
 
     public boolean shutdownMember(String clusterId, String memberId) {
-        LOG.info("Shutting down the Member "+ memberId + "on cluster : " + clusterId);
+        LOG.info("Shutting down the Member " + memberId + "on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
         hazelcastInstance.shutdown();
@@ -56,7 +59,7 @@ public class ClusterManager {
     }
 
     public boolean terminateMember(String clusterId, String memberId) {
-        LOG.info("Terminating the Member "+ memberId + "on cluster : " + clusterId);
+        LOG.info("Terminating the Member " + memberId + "on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
         hazelcastInstance.getLifecycleService().terminate();

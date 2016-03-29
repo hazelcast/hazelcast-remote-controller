@@ -24,32 +24,32 @@ class HzRemoteController(RemoteController.Iface):
         except Thrift.TException as tx:
             self.logger.warn('%s' % tx.message)
 
-    def terminateMember(self, clusterId, memberId):
-        return self.remote_controller.terminateMember(clusterId, memberId)
+    def terminateMember(self, cluster_id, member_id):
+        return self.remote_controller.terminateMember(cluster_id, member_id)
 
-    def terminateCluster(self, clusterId):
-        return self.remote_controller.terminateCluster(clusterId)
+    def terminateCluster(self, cluster_id):
+        return self.remote_controller.terminateCluster(cluster_id)
 
-    def startMember(self, clusterId):
-        return self.remote_controller.startMember(clusterId)
+    def startMember(self, cluster_id):
+        return self.remote_controller.startMember(cluster_id)
 
-    def splitMemberFromCluster(self, memberId):
-        return self.remote_controller.splitMemberFromCluster(memberId)
+    def splitMemberFromCluster(self, member_id):
+        return self.remote_controller.splitMemberFromCluster(member_id)
 
-    def shutdownMember(self, clusterId, memberId):
-        return self.remote_controller.shutdownMember(clusterId, memberId)
+    def shutdownMember(self, cluster_id, member_id):
+        return self.remote_controller.shutdownMember(cluster_id, member_id)
 
-    def shutdownCluster(self, clusterId):
-        return self.remote_controller.shutdownCluster(clusterId)
+    def shutdownCluster(self, cluster_id):
+        return self.remote_controller.shutdownCluster(cluster_id)
 
-    def mergeMemberToCluster(self, clusterId, memberId):
-        return self.remote_controller.mergeMemberToCluster(clusterId, memberId)
+    def mergeMemberToCluster(self, cluster_id, member_id):
+        return self.remote_controller.mergeMemberToCluster(cluster_id, member_id)
 
-    def executeOnController(self, clusterId, script, lang):
-        return self.remote_controller.executeOnController(clusterId, script, lang)
+    def executeOnController(self, cluster_id, script, lang):
+        return self.remote_controller.executeOnController(cluster_id, script, lang)
 
-    def createCluster(self, hzVersion, xmlconfig):
-        return self.remote_controller.createCluster(hzVersion, xmlconfig)
+    def createCluster(self, hz_version, xml_config):
+        return self.remote_controller.createCluster(hz_version, xml_config)
 
     def ping(self):
         return self.remote_controller.ping()

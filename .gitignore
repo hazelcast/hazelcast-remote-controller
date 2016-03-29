@@ -7,31 +7,31 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
+python-controller/env/
+python-controller/build/
+python-controller/develop-eggs/
+python-controller/dist/
+python-controller/downloads/
+python-controller/eggs/
+python-controller/.eggs/
+python-controller/lib/
+python-controller/lib64/
+python-controller/parts/
+python-controller/sdist/
+python-controller/var/
+python-controller/*.egg-info/
+python-controller/.installed.cfg
+python-controller/*.egg
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+python-controller/*.manifest
+python-controller/*.spec
 
 # Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+python-controller/pip-log.txt
+python-controller/pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/

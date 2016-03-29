@@ -8,9 +8,8 @@ import com.hazelcast.nio.Address;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,7 +28,7 @@ public class HzCluster {
     public HzCluster(String version, String xmlConfig) {
         this.version = version;
         this.xmlConfig = xmlConfig;
-        if(xmlConfig != null) {
+        if (xmlConfig != null) {
             InputStream inputStream = new ByteArrayInputStream(xmlConfig.getBytes(StandardCharsets.UTF_8));
             this.config = new XmlConfigBuilder(inputStream).build();
         } else {
@@ -41,7 +40,6 @@ public class HzCluster {
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember("localhost");
 
         config.setProperty(GroupProperty.TCP_JOIN_PORT_TRY_COUNT, "1");
-
 
     }
 
@@ -79,15 +77,19 @@ public class HzCluster {
         this.instances.remove(memberId);
     }
 
+    public Collection<HazelcastInstance> getInstances() {
+        return instances.values();
+    }
+
     public void shutdown() {
-        for (HazelcastInstance instance: this.instances.values()) {
+        for (HazelcastInstance instance : this.instances.values()) {
             instance.getLifecycleService().shutdown();
         }
         this.instances.clear();
     }
 
     public void terminate() {
-        for (HazelcastInstance instance: this.instances.values()) {
+        for (HazelcastInstance instance : this.instances.values()) {
             instance.getLifecycleService().terminate();
         }
         this.instances.clear();

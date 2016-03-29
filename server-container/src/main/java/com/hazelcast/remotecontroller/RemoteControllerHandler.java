@@ -1,6 +1,11 @@
 package com.hazelcast.remotecontroller;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.internal.management.ScriptEngineManagerContext;
 import org.apache.thrift.TException;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
 
@@ -68,9 +73,35 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public boolean executeOnController(String clusterId, String script, Lang lang) throws TException {
+    public Response executeOnController(String clusterId, String script, Lang lang) throws TException {
         //TODO
-        return false;
+        ScriptEngineManager scriptEngineManager = ScriptEngineManagerContext.getScriptEngineManager();
+        String engineName = lang.name().toLowerCase();
+        ScriptEngine engine = scriptEngineManager.getEngineByName(engineName);
+        if (engine == null) {
+            throw new IllegalArgumentException("Could not find ScriptEngine named:" + engineName);
+        }
+        int i = 0;
+        for (HazelcastInstance instance : clusterManager.getCluster(clusterId).getInstances()) {
+            engine.put("instance_" + i++, instance);
+        }
+        Response response = new Response();
+        try {
+            engine.eval(script);
+            Object result = engine.get("result");
+            if (result instanceof Throwable) {
+                response.setMessage(((Throwable) result).getMessage());
+            } else if (result instanceof byte[]) {
+                response.setResult((byte[]) result);
+            } else if (result instanceof String) {
+                response.setResult(((String) result).getBytes("utf-8"));
+            }
+            response.setSuccess(true);
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return response;
     }
 
 }

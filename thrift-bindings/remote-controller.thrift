@@ -13,11 +13,16 @@ struct Member{
     3:i32 port;
 }
 
+struct Response{
+    1:bool success;
+    2:string message;
+    3:binary result;
+}
 enum Lang{
-    JS = 1,
+    JAVASCRIPT = 1,
     GROOVY = 2,
-    JYTHON = 3,
-    JRUBY = 4
+    PYTHON = 3,
+    RUBY = 4
 }
 
 exception ServerException {
@@ -40,7 +45,7 @@ service RemoteController {
     Cluster splitMemberFromCluster(1:string memberId)
     Cluster mergeMemberToCluster(1:string clusterId, 2:string memberId)
 
-    bool executeOnController(1:string clusterId, 2:string script, 3:Lang lang);
+    Response executeOnController(1:string clusterId, 2:string script, 3:Lang lang);
 
 }
 
