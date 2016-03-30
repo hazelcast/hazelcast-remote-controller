@@ -1,0 +1,31 @@
+{
+  "name": "hazelcast-remote-controller",
+  "version": "0.0.1",
+  "description": "Hazelcast Remote Controller",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/hazelcast/hazelcast-remote-controller.git"
+  },
+  "keywords": [
+    "hazelcast",
+    "remote",
+    "controller"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hazelcast/hazelcast-remote-controller/issues"
+  },
+  "homepage": "https://github.com/hazelcast/hazelcast-remote-controller#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5"
+  },
+  "dependencies": {
+    "thrift": "^0.9.3"
+  }
+}
