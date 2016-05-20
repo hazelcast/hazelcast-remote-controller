@@ -67,6 +67,28 @@ public class ClusterManager {
         return true;
     }
 
+    public boolean suspendMember(String clusterId, String memberId) {
+        HzCluster hzCluster = clusterMap.get(clusterId);
+        HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        for (Thread thread : Thread.getAllStackTraces().keySet()) {
+            if (thread.getName().contains(hazelcastInstance.getName())) {
+                thread.suspend();
+            }
+        }
+        return true;
+    }
+
+    public boolean resumeMember(String clusterId, String memberId) {
+        HzCluster hzCluster = clusterMap.get(clusterId);
+        HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        for (Thread thread : Thread.getAllStackTraces().keySet()) {
+            if (thread.getName().contains(hazelcastInstance.getName())) {
+                thread.resume();
+            }
+        }
+        return true;
+    }
+
     public boolean shutdownCluster(String clusterId) {
         LOG.info("Shutting down the cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
@@ -100,4 +122,6 @@ public class ClusterManager {
         this.clusterMap.remove(hzCluster.getId());
         return true;
     }
+
+
 }

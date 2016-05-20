@@ -15,7 +15,7 @@ using System.Runtime.Serialization;
 using Thrift.Protocol;
 using Thrift.Transport;
 
-namespace Hazelcast.RemoteController
+namespace Hazelcast.Remote
 {
 
   #if !SILVERLIGHT
