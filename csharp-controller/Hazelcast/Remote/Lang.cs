@@ -5,13 +5,13 @@
  *  @generated
  */
 
-namespace Hazelcast.RemoteController
+namespace Hazelcast.Remote
 {
   public enum Lang
   {
-    JS = 1,
+    JAVASCRIPT = 1,
     GROOVY = 2,
-    JYTHON = 3,
-    JRUBY = 4,
+    PYTHON = 3,
+    RUBY = 4,
   }
 }

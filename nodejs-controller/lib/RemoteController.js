@@ -755,6 +755,244 @@ RemoteController_terminateMember_result.prototype.write = function(output) {
   return;
 };
 
+RemoteController_suspendMember_args = function(args) {
+  this.clusterId = null;
+  this.memberId = null;
+  if (args) {
+    if (args.clusterId !== undefined && args.clusterId !== null) {
+      this.clusterId = args.clusterId;
+    }
+    if (args.memberId !== undefined && args.memberId !== null) {
+      this.memberId = args.memberId;
+    }
+  }
+};
+RemoteController_suspendMember_args.prototype = {};
+RemoteController_suspendMember_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.clusterId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.memberId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+RemoteController_suspendMember_args.prototype.write = function(output) {
+  output.writeStructBegin('RemoteController_suspendMember_args');
+  if (this.clusterId !== null && this.clusterId !== undefined) {
+    output.writeFieldBegin('clusterId', Thrift.Type.STRING, 1);
+    output.writeString(this.clusterId);
+    output.writeFieldEnd();
+  }
+  if (this.memberId !== null && this.memberId !== undefined) {
+    output.writeFieldBegin('memberId', Thrift.Type.STRING, 2);
+    output.writeString(this.memberId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+RemoteController_suspendMember_result = function(args) {
+  this.success = null;
+  if (args) {
+    if (args.success !== undefined && args.success !== null) {
+      this.success = args.success;
+    }
+  }
+};
+RemoteController_suspendMember_result.prototype = {};
+RemoteController_suspendMember_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+RemoteController_suspendMember_result.prototype.write = function(output) {
+  output.writeStructBegin('RemoteController_suspendMember_result');
+  if (this.success !== null && this.success !== undefined) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+RemoteController_resumeMember_args = function(args) {
+  this.clusterId = null;
+  this.memberId = null;
+  if (args) {
+    if (args.clusterId !== undefined && args.clusterId !== null) {
+      this.clusterId = args.clusterId;
+    }
+    if (args.memberId !== undefined && args.memberId !== null) {
+      this.memberId = args.memberId;
+    }
+  }
+};
+RemoteController_resumeMember_args.prototype = {};
+RemoteController_resumeMember_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.clusterId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.memberId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+RemoteController_resumeMember_args.prototype.write = function(output) {
+  output.writeStructBegin('RemoteController_resumeMember_args');
+  if (this.clusterId !== null && this.clusterId !== undefined) {
+    output.writeFieldBegin('clusterId', Thrift.Type.STRING, 1);
+    output.writeString(this.clusterId);
+    output.writeFieldEnd();
+  }
+  if (this.memberId !== null && this.memberId !== undefined) {
+    output.writeFieldBegin('memberId', Thrift.Type.STRING, 2);
+    output.writeString(this.memberId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+RemoteController_resumeMember_result = function(args) {
+  this.success = null;
+  if (args) {
+    if (args.success !== undefined && args.success !== null) {
+      this.success = args.success;
+    }
+  }
+};
+RemoteController_resumeMember_result.prototype = {};
+RemoteController_resumeMember_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+RemoteController_resumeMember_result.prototype.write = function(output) {
+  output.writeStructBegin('RemoteController_resumeMember_result');
+  if (this.success !== null && this.success !== undefined) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 RemoteController_shutdownCluster_args = function(args) {
   this.clusterId = null;
   if (args) {
@@ -1674,6 +1912,102 @@ RemoteControllerClient.prototype.recv_terminateMember = function(input,mtype,rse
   }
   return callback('terminateMember failed: unknown result');
 };
+RemoteControllerClient.prototype.suspendMember = function(clusterId, memberId, callback) {
+  this._seqid = this.new_seqid();
+  if (callback === undefined) {
+    var _defer = Q.defer();
+    this._reqs[this.seqid()] = function(error, result) {
+      if (error) {
+        _defer.reject(error);
+      } else {
+        _defer.resolve(result);
+      }
+    };
+    this.send_suspendMember(clusterId, memberId);
+    return _defer.promise;
+  } else {
+    this._reqs[this.seqid()] = callback;
+    this.send_suspendMember(clusterId, memberId);
+  }
+};
+
+RemoteControllerClient.prototype.send_suspendMember = function(clusterId, memberId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('suspendMember', Thrift.MessageType.CALL, this.seqid());
+  var args = new RemoteController_suspendMember_args();
+  args.clusterId = clusterId;
+  args.memberId = memberId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+RemoteControllerClient.prototype.recv_suspendMember = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new RemoteController_suspendMember_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('suspendMember failed: unknown result');
+};
+RemoteControllerClient.prototype.resumeMember = function(clusterId, memberId, callback) {
+  this._seqid = this.new_seqid();
+  if (callback === undefined) {
+    var _defer = Q.defer();
+    this._reqs[this.seqid()] = function(error, result) {
+      if (error) {
+        _defer.reject(error);
+      } else {
+        _defer.resolve(result);
+      }
+    };
+    this.send_resumeMember(clusterId, memberId);
+    return _defer.promise;
+  } else {
+    this._reqs[this.seqid()] = callback;
+    this.send_resumeMember(clusterId, memberId);
+  }
+};
+
+RemoteControllerClient.prototype.send_resumeMember = function(clusterId, memberId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('resumeMember', Thrift.MessageType.CALL, this.seqid());
+  var args = new RemoteController_resumeMember_args();
+  args.clusterId = clusterId;
+  args.memberId = memberId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+RemoteControllerClient.prototype.recv_resumeMember = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new RemoteController_resumeMember_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('resumeMember failed: unknown result');
+};
 RemoteControllerClient.prototype.shutdownCluster = function(clusterId, callback) {
   this._seqid = this.new_seqid();
   if (callback === undefined) {
@@ -2177,6 +2511,76 @@ RemoteControllerProcessor.prototype.process_terminateMember = function(seqid, in
       } else {
         var result = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
         output.writeMessageBegin("terminateMember", Thrift.MessageType.EXCEPTION, seqid);
+      }
+      result.write(output);
+      output.writeMessageEnd();
+      output.flush();
+    });
+  }
+}
+
+RemoteControllerProcessor.prototype.process_suspendMember = function(seqid, input, output) {
+  var args = new RemoteController_suspendMember_args();
+  args.read(input);
+  input.readMessageEnd();
+  if (this._handler.suspendMember.length === 2) {
+    Q.fcall(this._handler.suspendMember, args.clusterId, args.memberId)
+      .then(function(result) {
+        var result = new RemoteController_suspendMember_result({success: result});
+        output.writeMessageBegin("suspendMember", Thrift.MessageType.REPLY, seqid);
+        result.write(output);
+        output.writeMessageEnd();
+        output.flush();
+      }, function (err) {
+        var result = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
+        output.writeMessageBegin("suspendMember", Thrift.MessageType.EXCEPTION, seqid);
+        result.write(output);
+        output.writeMessageEnd();
+        output.flush();
+      });
+  } else {
+    this._handler.suspendMember(args.clusterId, args.memberId, function (err, result) {
+      if (err == null) {
+        var result = new RemoteController_suspendMember_result((err != null ? err : {success: result}));
+        output.writeMessageBegin("suspendMember", Thrift.MessageType.REPLY, seqid);
+      } else {
+        var result = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
+        output.writeMessageBegin("suspendMember", Thrift.MessageType.EXCEPTION, seqid);
+      }
+      result.write(output);
+      output.writeMessageEnd();
+      output.flush();
+    });
+  }
+}
+
+RemoteControllerProcessor.prototype.process_resumeMember = function(seqid, input, output) {
+  var args = new RemoteController_resumeMember_args();
+  args.read(input);
+  input.readMessageEnd();
+  if (this._handler.resumeMember.length === 2) {
+    Q.fcall(this._handler.resumeMember, args.clusterId, args.memberId)
+      .then(function(result) {
+        var result = new RemoteController_resumeMember_result({success: result});
+        output.writeMessageBegin("resumeMember", Thrift.MessageType.REPLY, seqid);
+        result.write(output);
+        output.writeMessageEnd();
+        output.flush();
+      }, function (err) {
+        var result = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
+        output.writeMessageBegin("resumeMember", Thrift.MessageType.EXCEPTION, seqid);
+        result.write(output);
+        output.writeMessageEnd();
+        output.flush();
+      });
+  } else {
+    this._handler.resumeMember(args.clusterId, args.memberId, function (err, result) {
+      if (err == null) {
+        var result = new RemoteController_resumeMember_result((err != null ? err : {success: result}));
+        output.writeMessageBegin("resumeMember", Thrift.MessageType.REPLY, seqid);
+      } else {
+        var result = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
+        output.writeMessageBegin("resumeMember", Thrift.MessageType.EXCEPTION, seqid);
       }
       result.write(output);
       output.writeMessageEnd();

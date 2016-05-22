@@ -51,6 +51,16 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
+    public boolean suspendMember(String clusterId, String memberId) throws TException {
+        return clusterManager.suspendMember(clusterId, memberId);
+    }
+
+    @Override
+    public boolean resumeMember(String clusterId, String memberId) throws TException {
+        return clusterManager.resumeMember(clusterId, memberId);
+    }
+
+    @Override
     public boolean shutdownCluster(String clusterId) throws TException {
         return clusterManager.shutdownCluster(clusterId);
     }

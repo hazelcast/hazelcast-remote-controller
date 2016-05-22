@@ -19,6 +19,8 @@ public class ClientRemoteControllerTest {
             TProtocol protocol = new TBinaryProtocol(transport);
             RemoteController.Client client = new RemoteController.Client(protocol);
 
+            client.createCluster(null, null);
+
             System.out.println("remote ping result:" + client.ping());
 
             transport.close();

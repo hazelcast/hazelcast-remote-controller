@@ -1,6 +1,6 @@
 namespace java com.hazelcast.remotecontroller
 namespace py hzrc
-namespace csharp Hazelcast.RemoteController
+namespace csharp Hazelcast.Remote
 
 
 struct Cluster{
@@ -38,6 +38,8 @@ service RemoteController {
     Member startMember(1:string clusterId) throws (1:ServerException serverException);
     bool shutdownMember(1:string clusterId, 2:string memberId);
     bool terminateMember(1:string clusterId, 2:string memberId);
+    bool suspendMember(1:string clusterId, 2:string memberId);
+    bool resumeMember(1:string clusterId, 2:string memberId);
 
     bool shutdownCluster(1:string clusterId);
     bool terminateCluster(1:string clusterId);

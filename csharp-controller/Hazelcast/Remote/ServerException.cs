@@ -15,26 +15,26 @@ using System.Runtime.Serialization;
 using Thrift.Protocol;
 using Thrift.Transport;
 
-namespace Hazelcast.RemoteController
+namespace Hazelcast.Remote
 {
 
   #if !SILVERLIGHT
   [Serializable]
   #endif
-  public partial class Cluster : TBase
+  public partial class ServerException : TException, TBase
   {
-    private string _id;
+    private string _message;
 
-    public string Id
+    public string Message
     {
       get
       {
-        return _id;
+        return _message;
       }
       set
       {
-        __isset.id = true;
-        this._id = value;
+        __isset.message = true;
+        this._message = value;
       }
     }
 
@@ -44,10 +44,10 @@ namespace Hazelcast.RemoteController
     [Serializable]
     #endif
     public struct Isset {
-      public bool id;
+      public bool message;
     }
 
-    public Cluster() {
+    public ServerException() {
     }
 
     public void Read (TProtocol iprot)
@@ -67,7 +67,7 @@ namespace Hazelcast.RemoteController
           {
             case 1:
               if (field.Type == TType.String) {
-                Id = iprot.ReadString();
+                Message = iprot.ReadString();
               } else { 
                 TProtocolUtil.Skip(iprot, field.Type);
               }
@@ -90,15 +90,15 @@ namespace Hazelcast.RemoteController
       oprot.IncrementRecursionDepth();
       try
       {
-        TStruct struc = new TStruct("Cluster");
+        TStruct struc = new TStruct("ServerException");
         oprot.WriteStructBegin(struc);
         TField field = new TField();
-        if (Id != null && __isset.id) {
-          field.Name = "id";
+        if (Message != null && __isset.message) {
+          field.Name = "message";
           field.Type = TType.String;
           field.ID = 1;
           oprot.WriteFieldBegin(field);
-          oprot.WriteString(Id);
+          oprot.WriteString(Message);
           oprot.WriteFieldEnd();
         }
         oprot.WriteFieldStop();
@@ -111,13 +111,13 @@ namespace Hazelcast.RemoteController
     }
 
     public override string ToString() {
-      StringBuilder __sb = new StringBuilder("Cluster(");
+      StringBuilder __sb = new StringBuilder("ServerException(");
       bool __first = true;
-      if (Id != null && __isset.id) {
+      if (Message != null && __isset.message) {
         if(!__first) { __sb.Append(", "); }
         __first = false;
-        __sb.Append("Id: ");
-        __sb.Append(Id);
+        __sb.Append("Message: ");
+        __sb.Append(Message);
       }
       __sb.Append(")");
       return __sb.ToString();
