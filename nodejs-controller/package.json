@@ -1,6 +1,6 @@
 {
   "name": "hazelcast-remote-controller",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Hazelcast Remote Controller",
   "main": "index.js",
   "scripts": {
