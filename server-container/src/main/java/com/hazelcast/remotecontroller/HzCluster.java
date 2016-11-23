@@ -3,7 +3,6 @@ package com.hazelcast.remotecontroller;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.instance.GroupProperty;
 import com.hazelcast.nio.Address;
 
 import java.io.ByteArrayInputStream;
@@ -39,7 +38,7 @@ public class HzCluster {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember("localhost");
 
-        config.setProperty(GroupProperty.TCP_JOIN_PORT_TRY_COUNT, "1");
+        config.setProperty("hazelcast.tcp.join.port.try.count", "1");
 
     }
 
