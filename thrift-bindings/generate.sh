@@ -8,6 +8,7 @@ PYTHON_PATH="../python-controller"
 JAVA_PATH="../server-container/src/main/java"
 NODEJS_PATH="../nodejs-controller/lib"
 CSHARP_PATH="../csharp-controller"
+GOLANG_PATH="../golang-controller"
 
 ECHO $"Generating Thrift bindings for ${GEN_LANG}"
 
@@ -23,6 +24,9 @@ case ${GEN_LANG} in
         ;;
     csharp)
         thrift -r --gen csharp -out ${CSHARP_PATH} ${THRIFT_FILE}
+        ;;
+    go)
+        thrift -r --gen go -out ${GOLANG_PATH} ${THRIFT_FILE}
         ;;
     *)
         echo $"$1 not supported"
