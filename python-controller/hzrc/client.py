@@ -4,7 +4,7 @@ from thrift import Thrift
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
-import RemoteController
+from hzrc import RemoteController
 
 
 class HzRemoteController(RemoteController.Iface):
