@@ -10,7 +10,7 @@ NODEJS_PATH="../nodejs-controller/lib"
 CSHARP_PATH="../csharp-controller"
 GOLANG_PATH="../golang-controller"
 
-ECHO $"Generating Thrift bindings for ${GEN_LANG}"
+echo $"Generating Thrift bindings for ${GEN_LANG}"
 
 case ${GEN_LANG} in
     java)
