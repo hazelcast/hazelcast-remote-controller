@@ -39,6 +39,7 @@ public class HzCluster {
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember("localhost");
 
         config.setProperty("hazelcast.tcp.join.port.try.count", "1");
+        config.setProperty("hazelcast.phone.home.enabled", "false");
 
     }
 
