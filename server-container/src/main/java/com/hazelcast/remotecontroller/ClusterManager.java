@@ -53,18 +53,24 @@ public class ClusterManager {
         LOG.info("Shutting down the Member " + memberId + "on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
-        hazelcastInstance.shutdown();
-        hzCluster.removeInstance(memberId);
-        return true;
+        if (hazelcastInstance != null) {
+            hazelcastInstance.shutdown();
+            hzCluster.removeInstance(memberId);
+            return true;
+        }
+        return false;
     }
 
     public boolean terminateMember(String clusterId, String memberId) {
         LOG.info("Terminating the Member " + memberId + "on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
-        hazelcastInstance.getLifecycleService().terminate();
-        hzCluster.removeInstance(memberId);
-        return true;
+        if (hazelcastInstance != null) {
+            hazelcastInstance.getLifecycleService().terminate();
+            hzCluster.removeInstance(memberId);
+            return true;
+        }
+        return false;
     }
 
     public boolean suspendMember(String clusterId, String memberId) {
@@ -92,9 +98,13 @@ public class ClusterManager {
     public boolean shutdownCluster(String clusterId) {
         LOG.info("Shutting down the cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
-        hzCluster.shutdown();
-        this.clusterMap.remove(hzCluster.getId());
-        return true;
+        if (hzCluster != null) {
+            hzCluster.shutdown();
+            this.clusterMap.remove(hzCluster.getId());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public boolean clean() {
@@ -124,4 +134,22 @@ public class ClusterManager {
     }
 
 
+    public boolean setAttributes(String clusterId, String memberId) {
+        LOG.info("Setting attributes of server : " + memberId + " in cluster " + clusterId);
+        HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            return false;
+        }
+
+        HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        hazelcastInstance.getCluster().getLocalMember().setIntAttribute("intAttr", 211);
+        hazelcastInstance.getCluster().getLocalMember().setBooleanAttribute("boolAttr", true);
+        hazelcastInstance.getCluster().getLocalMember().setByteAttribute("byteAttr", (byte) 7);
+        hazelcastInstance.getCluster().getLocalMember().setDoubleAttribute("doubleAttr", 2);
+        hazelcastInstance.getCluster().getLocalMember().setFloatAttribute("floatAttr", 1.2f);
+        hazelcastInstance.getCluster().getLocalMember().setShortAttribute("shortAttr", (short) 3);
+        hazelcastInstance.getCluster().getLocalMember().setStringAttribute("strAttr", "strAttr");
+
+        return false;
+    }
 }

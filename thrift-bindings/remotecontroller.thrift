@@ -49,5 +49,7 @@ service RemoteController {
 
     Response executeOnController(1:string clusterId, 2:string script, 3:Lang lang);
 
+    bool setAttributes(1:Cluster cluster, 2:Member member)
+
 }
 

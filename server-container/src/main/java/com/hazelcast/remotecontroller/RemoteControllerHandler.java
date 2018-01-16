@@ -116,4 +116,9 @@ public class RemoteControllerHandler implements RemoteController.Iface {
         return response;
     }
 
+    @Override
+    public boolean setAttributes(Cluster cluster, Member member) throws TException {
+        return clusterManager.setAttributes(cluster.getId(), member.uuid);
+    }
+
 }

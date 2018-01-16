@@ -6,6 +6,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.nio.Address;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -24,12 +25,11 @@ public class HzCluster {
 
     private final ConcurrentHashMap<String, HazelcastInstance> instances = new ConcurrentHashMap<>();
 
-    public HzCluster(String version, String xmlConfig) {
+    public HzCluster(String version, String xmlConfig) throws FileNotFoundException {
         this.version = version;
         this.xmlConfig = xmlConfig;
-        if (xmlConfig != null) {
-            InputStream inputStream = new ByteArrayInputStream(xmlConfig.getBytes(StandardCharsets.UTF_8));
-            this.config = new XmlConfigBuilder(inputStream).build();
+        if (xmlConfig != null && xmlConfig.length() > 0) {
+            this.config = new XmlConfigBuilder(xmlConfig).build();
         } else {
             this.config = new XmlConfigBuilder().build();
         }
