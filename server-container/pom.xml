@@ -77,9 +77,15 @@
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast-enterprise</artifactId>
+            <version>${hazelcast.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
             <version>${hazelcast.version}</version>
-            <scope>provided</scope>
+            <type>test-jar</type>
         </dependency>
     </dependencies>
 
