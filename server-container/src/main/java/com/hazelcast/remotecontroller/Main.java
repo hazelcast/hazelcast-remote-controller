@@ -2,11 +2,16 @@ package com.hazelcast.remotecontroller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.ServerContext;
+import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadPoolServer;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
@@ -28,13 +33,19 @@ public class Main {
 
             Runnable simple = () -> {
                 try {
-                    TServerTransport serverTransport = new TServerSocket(PORT);
-                    TServer server = new TSimpleServer(new TSimpleServer.Args(serverTransport).processor(processor));
+                    TNonblockingServerSocket socket = new TNonblockingServerSocket(PORT);
+
+                    TNonblockingServer.Args tnbArgs = new TNonblockingServer.Args(socket);
+                    tnbArgs.processor(processor);
+
+                    tnbArgs.transportFactory(new TFramedTransport.Factory(Integer.MAX_VALUE));
+                    tnbArgs.protocolFactory(new TBinaryProtocol.Factory());
+
+                    TServer server = new TNonblockingServer(tnbArgs);
+                    server.setServerEventHandler(new ServerEventHandler(handler));
 
                     LOG.info("Starting Remote Controller Server on port:" + PORT);
 
-                    //Set server event handler
-                    server.setServerEventHandler(new ServerEventHandler(handler));
                     server.serve();
                 } catch (Exception e) {
                     e.printStackTrace();

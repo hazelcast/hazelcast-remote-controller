@@ -7,7 +7,7 @@
     <groupId>com.hazelcast</groupId>
     <artifactId>hazelcast-remote-controller-root</artifactId>
     <packaging>pom</packaging>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.5-SNAPSHOT</version>
     <name>Hazelcast Remote Controller Root</name>
     <description>A Remote Controller for Hazelcast Client Tests</description>
     <modules>
@@ -39,7 +39,7 @@
         <junit.version>4.12</junit.version>
         <hamcrest.version>1.3</hamcrest.version>
 
-        <hazelcast.version>3.9</hazelcast.version>
+        <hazelcast.version>3.10</hazelcast.version>
         <thrift.version>0.10.0</thrift.version>
     </properties>
 
