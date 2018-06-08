@@ -6,6 +6,7 @@ import org.apache.thrift.TException;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.util.Locale;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
 
@@ -86,7 +87,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     public Response executeOnController(String clusterId, String script, Lang lang) throws TException {
         //TODO
         ScriptEngineManager scriptEngineManager = ScriptEngineManagerContext.getScriptEngineManager();
-        String engineName = lang.name().toLowerCase();
+        String engineName = lang.name().toLowerCase(Locale.ENGLISH);
         ScriptEngine engine = scriptEngineManager.getEngineByName(engineName);
         if (engine == null) {
             throw new IllegalArgumentException("Could not find ScriptEngine named:" + engineName);
