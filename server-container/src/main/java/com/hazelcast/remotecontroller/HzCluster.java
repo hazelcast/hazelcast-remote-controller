@@ -33,6 +33,8 @@ public class HzCluster {
         } else {
             this.config = new XmlConfigBuilder().build();
         }
+        //configure cluster id as group name
+        config.getGroupConfig().setName(id).setPassword(id);
         //disable multicast
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
