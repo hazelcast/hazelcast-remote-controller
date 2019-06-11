@@ -85,8 +85,10 @@ public class HzCluster {
     }
 
     public void shutdown() {
-        HazelcastInstance instance = this.instances.values().iterator().next();
-        instance.getCluster().shutdown();
+        Iterator<HazelcastInstance> iterator = this.instances.values().iterator();
+        if (iterator.hasNext()) {
+            iterator.next().getCluster().shutdown();
+        }
         this.instances.clear();
     }
 
