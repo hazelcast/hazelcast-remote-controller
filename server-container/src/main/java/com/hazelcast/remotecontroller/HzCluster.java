@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -84,9 +85,8 @@ public class HzCluster {
     }
 
     public void shutdown() {
-        for (HazelcastInstance instance : this.instances.values()) {
-            instance.getLifecycleService().shutdown();
-        }
+        HazelcastInstance instance = this.instances.values().iterator().next();
+        instance.getCluster().shutdown();
         this.instances.clear();
     }
 

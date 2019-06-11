@@ -93,7 +93,6 @@ public class ClusterManager {
         LOG.info("Shutting down the cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         hzCluster.shutdown();
-        this.clusterMap.remove(hzCluster.getId());
         return true;
     }
 
