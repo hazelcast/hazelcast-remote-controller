@@ -127,7 +127,12 @@ public class ClusterManager {
             return false;
         }
         LOG.info("Shutting down the cluster : " + clusterId);
-        hzCluster.shutdown();
+        try {
+            hzCluster.shutdown();
+        } catch (Exception e) {
+            LOG.info("Exception during cluster shutdown: ", e);
+            return false;
+        }
         return true;
     }
 
@@ -156,7 +161,11 @@ public class ClusterManager {
             LOG.info("Cluster does not exist: " + clusterId);
             return false;
         }
-        hzCluster.terminate();
+        try {
+            hzCluster.terminate();
+        } catch (Exception e) {
+            LOG.info("Exception during cluster terminate: ", e);
+        }
         this.clusterMap.remove(hzCluster.getId());
         return true;
     }
