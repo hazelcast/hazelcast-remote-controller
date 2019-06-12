@@ -35,24 +35,31 @@ public class ClusterManager {
     public Member startMember(String clusterId) throws ServerException {
         LOG.info("Starting a Member on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
-        if (hzCluster != null) {
-            Config config = hzCluster.getConfig();
-
-            LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
-
-            HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
-            com.hazelcast.core.Member member = hzInstance.getCluster().getLocalMember();
-            if (hzCluster.addInstance(member.getUuid(), hzInstance)) {
-                return new Member(member.getUuid(), member.getAddress().getHost(), member.getAddress().getPort());
-            }
+        if (hzCluster == null) {
+            throw new ServerException("Cannot find Cluster with id:" + clusterId);
         }
-        throw new ServerException("Cannot find Cluster with id:" + clusterId);
+        Config config = hzCluster.getConfig();
+
+        LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
+
+        HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
+        com.hazelcast.core.Member member = hzInstance.getCluster().getLocalMember();
+        hzCluster.addInstance(member.getUuid(), hzInstance);
+        return new Member(member.getUuid(), member.getAddress().getHost(), member.getAddress().getPort());
     }
 
     public boolean shutdownMember(String clusterId, String memberId) {
         LOG.info("Shutting down the Member " + memberId + "on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            LOG.info("Cluster does not exist: " + clusterId);
+            return false;
+        }
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        if (hazelcastInstance == null) {
+            LOG.info("Member does not exist: " + memberId);
+            return false;
+        }
         hazelcastInstance.shutdown();
         hzCluster.removeInstance(memberId);
         return true;
@@ -61,7 +68,15 @@ public class ClusterManager {
     public boolean terminateMember(String clusterId, String memberId) {
         LOG.info("Terminating the Member " + memberId + "on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            LOG.info("Cluster does not exist: " + clusterId);
+            return false;
+        }
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        if (hazelcastInstance == null) {
+            LOG.info("Member does not exist: " + memberId);
+            return false;
+        }
         hazelcastInstance.getLifecycleService().terminate();
         hzCluster.removeInstance(memberId);
         return true;
@@ -69,7 +84,15 @@ public class ClusterManager {
 
     public boolean suspendMember(String clusterId, String memberId) {
         HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            LOG.info("Cluster does not exist: " + clusterId);
+            return false;
+        }
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        if (hazelcastInstance == null) {
+            LOG.info("Member does not exist: " + memberId);
+            return false;
+        }
         for (Thread thread : Thread.getAllStackTraces().keySet()) {
             if (thread.getName().contains(hazelcastInstance.getName())) {
                 thread.suspend();
@@ -80,7 +103,15 @@ public class ClusterManager {
 
     public boolean resumeMember(String clusterId, String memberId) {
         HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            LOG.info("Cluster does not exist: " + clusterId);
+            return false;
+        }
         HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+        if (hazelcastInstance == null) {
+            LOG.info("Member does not exist: " + memberId);
+            return false;
+        }
         for (Thread thread : Thread.getAllStackTraces().keySet()) {
             if (thread.getName().contains(hazelcastInstance.getName())) {
                 thread.resume();
@@ -90,8 +121,12 @@ public class ClusterManager {
     }
 
     public boolean shutdownCluster(String clusterId) {
-        LOG.info("Shutting down the cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            LOG.info("Cluster does not exist: " + clusterId);
+            return false;
+        }
+        LOG.info("Shutting down the cluster : " + clusterId);
         hzCluster.shutdown();
         return true;
     }
@@ -117,6 +152,10 @@ public class ClusterManager {
     public boolean terminateCluster(String clusterId) {
         LOG.info("Shutting down the cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
+        if (hzCluster == null) {
+            LOG.info("Cluster does not exist: " + clusterId);
+            return false;
+        }
         hzCluster.terminate();
         this.clusterMap.remove(hzCluster.getId());
         return true;
