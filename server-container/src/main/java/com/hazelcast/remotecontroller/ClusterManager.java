@@ -36,7 +36,9 @@ public class ClusterManager {
         LOG.info("Starting a Member on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
-            throw new ServerException("Cannot find Cluster with id:" + clusterId);
+            String log = "Cannot find Cluster with id:" + clusterId;
+            LOG.info(log);
+            throw new ServerException(log);
         }
         Config config = hzCluster.getConfig();
 
@@ -155,7 +157,7 @@ public class ClusterManager {
     }
 
     public boolean terminateCluster(String clusterId) {
-        LOG.info("Shutting down the cluster : " + clusterId);
+        LOG.info("Terminating the cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
             LOG.info("Cluster does not exist: " + clusterId);
