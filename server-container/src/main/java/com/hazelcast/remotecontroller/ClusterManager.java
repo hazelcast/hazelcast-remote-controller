@@ -43,9 +43,9 @@ public class ClusterManager {
         LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
 
         HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
-        com.hazelcast.core.Member member = hzInstance.getCluster().getLocalMember();
+        com.hazelcast.cluster.Member member = hzInstance.getCluster().getLocalMember();
         hzCluster.addInstance(member.getUuid(), hzInstance);
-        return new Member(member.getUuid(), member.getAddress().getHost(), member.getAddress().getPort());
+        return new Member(member.getUuid().toString(), member.getAddress().getHost(), member.getAddress().getPort());
     }
 
     public boolean shutdownMember(String clusterId, String memberId) {

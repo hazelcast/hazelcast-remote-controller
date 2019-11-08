@@ -1,9 +1,9 @@
 package com.hazelcast.remotecontroller;
 
+import com.hazelcast.cluster.Address;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.nio.Address;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -23,7 +23,7 @@ public class HzCluster {
 
     private final AtomicReference<HazelcastInstance> master = new AtomicReference<>();
 
-    private final ConcurrentHashMap<String, HazelcastInstance> instances = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, HazelcastInstance> instances = new ConcurrentHashMap<>();
 
     public HzCluster(String version, String xmlConfig) {
         this.version = version;
@@ -34,8 +34,8 @@ public class HzCluster {
         } else {
             this.config = new XmlConfigBuilder().build();
         }
-        //configure cluster id as group name
-        config.getGroupConfig().setName(id).setPassword(id);
+        //configure cluster id as cluster name
+        config.setClusterName(id);
         //disable multicast
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
@@ -62,7 +62,7 @@ public class HzCluster {
         return config;
     }
 
-    public boolean addInstance(String id, HazelcastInstance hzInstance) {
+    public boolean addInstance(UUID id, HazelcastInstance hzInstance) {
         if (master.compareAndSet(null, hzInstance)) {
             Address address = hzInstance.getCluster().getLocalMember().getAddress();
             String memberAddress = address.getHost() + ":" + address.getPort();

@@ -16,7 +16,7 @@
 
 package com.hazelcast.nio.ssl;
 
-import com.hazelcast.nio.IOUtil;
+import com.hazelcast.internal.nio.IOUtil;
 import com.hazelcast.spi.annotation.PrivateApi;
 
 import javax.net.ssl.KeyManager;
@@ -25,7 +25,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
