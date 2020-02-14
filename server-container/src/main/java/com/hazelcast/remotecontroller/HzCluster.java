@@ -23,7 +23,7 @@ public class HzCluster {
 
     private final AtomicReference<HazelcastInstance> master = new AtomicReference<>();
 
-    private final ConcurrentHashMap<UUID, HazelcastInstance> instances = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, HazelcastInstance> instances = new ConcurrentHashMap<>();
 
     public HzCluster(String version, String xmlConfig) {
         this.version = version;
@@ -62,7 +62,7 @@ public class HzCluster {
         return config;
     }
 
-    public boolean addInstance(UUID id, HazelcastInstance hzInstance) {
+    public boolean addInstance(String id, HazelcastInstance hzInstance) {
         if (master.compareAndSet(null, hzInstance)) {
             Address address = hzInstance.getCluster().getLocalMember().getAddress();
             String memberAddress = address.getHost() + ":" + address.getPort();

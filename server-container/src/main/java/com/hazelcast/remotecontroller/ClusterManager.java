@@ -46,7 +46,7 @@ public class ClusterManager {
 
         HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
         com.hazelcast.cluster.Member member = hzInstance.getCluster().getLocalMember();
-        hzCluster.addInstance(member.getUuid(), hzInstance);
+        hzCluster.addInstance(member.getUuid().toString(), hzInstance);
         return new Member(member.getUuid().toString(), member.getAddress().getHost(), member.getAddress().getPort());
     }
 
