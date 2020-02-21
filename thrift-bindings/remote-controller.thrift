@@ -1,6 +1,6 @@
 namespace java com.hazelcast.remotecontroller
 namespace py hzrc
-namespace csharp Hazelcast.Remote
+namespace netstd Hazelcast.Remote
 
 
 struct Cluster{

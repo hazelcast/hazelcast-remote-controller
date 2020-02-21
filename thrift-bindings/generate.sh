@@ -4,11 +4,11 @@ GEN_LANG="$1"
 
 THRIFT_FILE="remote-controller.thrift"
 
-PYTHON_PATH="../python-controller"
-JAVA_PATH="../server-container/src/main/java"
-NODEJS_PATH="../nodejs-controller/lib"
-CSHARP_PATH="../csharp-controller"
-GOLANG_PATH="../golang-controller"
+JAVA_PATH="../src/main/java"
+PYTHON_PATH="./python"
+NODEJS_PATH="./nodejs"
+CSHARP_PATH="./netstd"
+GOLANG_PATH="./golang"
 
 echo $"Generating Thrift bindings for ${GEN_LANG}"
 
@@ -23,7 +23,7 @@ case ${GEN_LANG} in
         thrift -r --gen js:node -out ${NODEJS_PATH} ${THRIFT_FILE}
         ;;
     csharp)
-        thrift -r --gen csharp -out ${CSHARP_PATH} ${THRIFT_FILE}
+        thrift -r --gen netstd -out ${CSHARP_PATH} ${THRIFT_FILE}
         ;;
     go)
         thrift -r --gen go -out ${GOLANG_PATH} ${THRIFT_FILE}
