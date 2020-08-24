@@ -34,6 +34,7 @@ service RemoteController {
     bool exit();
 
     Cluster createCluster(1:string hzVersion, 2:string xmlconfig) throws (1:ServerException serverException);
+    Cluster createClusterKeepClusterName(1:string hzVersion, 2:string xmlconfig) throws (1:ServerException serverException);
 
     Member startMember(1:string clusterId) throws (1:ServerException serverException);
     bool shutdownMember(1:string clusterId, 2:string memberId);

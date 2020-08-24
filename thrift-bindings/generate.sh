@@ -9,6 +9,7 @@ PYTHON_PATH="./python"
 NODEJS_PATH="./nodejs"
 CSHARP_PATH="./netstd"
 GOLANG_PATH="./golang"
+CPP_PATH="../cpp"
 
 echo $"Generating Thrift bindings for ${GEN_LANG}"
 
@@ -27,6 +28,9 @@ case ${GEN_LANG} in
         ;;
     go)
         thrift -r --gen go -out ${GOLANG_PATH} ${THRIFT_FILE}
+        ;;
+    cpp)
+        thrift -r --gen cpp -out ${CPP_PATH} ${THRIFT_FILE}
         ;;
     *)
         echo $"$1 not supported"

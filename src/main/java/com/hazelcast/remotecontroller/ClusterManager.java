@@ -17,9 +17,9 @@ public class ClusterManager {
     public ClusterManager() {
     }
 
-    public Cluster createCluster(String hzVersion, String xmlconfig) throws ServerException {
+    public Cluster createCluster(String hzVersion, String xmlconfig, boolean keepClusterName) throws ServerException {
         try {
-            HzCluster hzCluster = new HzCluster(hzVersion, xmlconfig);
+            HzCluster hzCluster = new HzCluster(hzVersion, xmlconfig, keepClusterName);
             this.clusterMap.putIfAbsent(hzCluster.getId(), hzCluster);
             return new Cluster(hzCluster.getId());
         } catch (Exception e) {
