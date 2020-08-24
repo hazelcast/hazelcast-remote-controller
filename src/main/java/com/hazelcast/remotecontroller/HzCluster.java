@@ -34,7 +34,7 @@ public class HzCluster {
         } else {
             this.config = new XmlConfigBuilder().build();
         }
-        if (!keepClusterName) {
+        if (keepClusterName) {
             id = config.getClusterName();
         } else {
             //configure cluster id as cluster name
