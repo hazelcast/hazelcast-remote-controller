@@ -33,7 +33,12 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     @Override
     public Cluster createCluster(String hzVersion, String xmlconfig) throws TException {
-        return clusterManager.createCluster(hzVersion, xmlconfig);
+        return clusterManager.createCluster(hzVersion, xmlconfig, false);
+    }
+
+    @Override
+    public Cluster createClusterKeepClusterName(String hzVersion, String xmlconfig) throws ServerException, TException {
+        return clusterManager.createCluster(hzVersion, xmlconfig, true);
     }
 
     @Override

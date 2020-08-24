@@ -25,7 +25,7 @@ public class HzCluster {
 
     private final ConcurrentHashMap<String, HazelcastInstance> instances = new ConcurrentHashMap<>();
 
-    public HzCluster(String version, String xmlConfig) {
+    public HzCluster(String version, String xmlConfig, boolean keepClusterName) {
         this.version = version;
         this.xmlConfig = xmlConfig;
         if (xmlConfig != null) {
@@ -34,8 +34,12 @@ public class HzCluster {
         } else {
             this.config = new XmlConfigBuilder().build();
         }
-        //configure cluster id as cluster name
-        config.setClusterName(id);
+        if (!keepClusterName) {
+            id = config.getClusterName();
+        } else {
+            //configure cluster id as cluster name
+            config.setClusterName(id);
+        }
         //disable multicast
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
