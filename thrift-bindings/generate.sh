@@ -2,14 +2,14 @@
 
 GEN_LANG="$1"
 
-THRIFT_FILE="remote-controller.thrift"
+THRIFT_FILE="remote_controller.thrift"
 
 JAVA_PATH="../src/main/java"
 PYTHON_PATH="./python"
 NODEJS_PATH="./nodejs"
 CSHARP_PATH="./netstd"
 GOLANG_PATH="./golang"
-CPP_PATH="../cpp"
+CPP_PATH="../cpp-controller"
 
 echo $"Generating Thrift bindings for ${GEN_LANG}"
 
@@ -30,7 +30,7 @@ case ${GEN_LANG} in
         thrift -r --gen go -out ${GOLANG_PATH} ${THRIFT_FILE}
         ;;
     cpp)
-        thrift -r --gen cpp -out ${CPP_PATH} ${THRIFT_FILE}
+        thrift -r --gen cpp -out ${CPP_PATH}  ${THRIFT_FILE}
         ;;
     *)
         echo $"$1 not supported"
