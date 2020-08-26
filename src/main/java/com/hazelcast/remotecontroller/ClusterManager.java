@@ -142,6 +142,7 @@ public class ClusterManager {
             LOG.info("Exception during cluster shutdown: ", e);
             return false;
         }
+        this.clusterMap.remove(hzCluster.getId());
         return true;
     }
 
