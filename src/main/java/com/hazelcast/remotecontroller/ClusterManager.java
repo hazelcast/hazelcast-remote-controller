@@ -20,7 +20,14 @@ public class ClusterManager {
     public Cluster createCluster(String hzVersion, String xmlconfig, boolean keepClusterName) throws ServerException {
         try {
             HzCluster hzCluster = new HzCluster(hzVersion, xmlconfig, keepClusterName);
-            this.clusterMap.putIfAbsent(hzCluster.getId(), hzCluster);
+            final HzCluster existingCluster = this.clusterMap.putIfAbsent(hzCluster.getId(), hzCluster);
+            if (existingCluster != null) {
+                if (!existingCluster.getXmlConfig().equals(xmlconfig)) {
+                    throw new ServerException("A cluster with the same cluster-name " + hzCluster.getId()
+                            + " but with a different config already exists. Existing cluster config: " + hzCluster.getXmlConfig()
+                            + "\n" + ", new config:" + xmlconfig);
+                }
+            }
             return new Cluster(hzCluster.getId());
         } catch (Exception e) {
             LOG.warn(e);
