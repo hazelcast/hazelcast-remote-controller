@@ -1,6 +1,7 @@
 namespace java com.hazelcast.remotecontroller
 namespace py hzrc
 namespace netstd Hazelcast.Remote
+namespace cpp hazelcast.client.test.remote
 
 
 struct Cluster{
