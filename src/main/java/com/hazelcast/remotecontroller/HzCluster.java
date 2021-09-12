@@ -108,6 +108,6 @@ public class HzCluster {
     }
 
     private String getLicenseKey() {
-        return System.getenv("HAZELCAST_LICENSE_KEY");
+        return System.getenv("HAZELCAST_ENTERPRISE_KEY");
     }
 }
