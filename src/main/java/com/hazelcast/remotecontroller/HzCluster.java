@@ -48,6 +48,10 @@ public class HzCluster {
         config.setProperty("hazelcast.tcp.join.port.try.count", "1");
         config.setProperty("hazelcast.phone.home.enabled", "false");
 
+        String licenseKey = getLicenseKey();
+        if (licenseKey != null) {
+            config.setLicenseKey(licenseKey);
+        }
     }
 
     public String getXmlConfig() {
@@ -101,5 +105,9 @@ public class HzCluster {
             instance.getLifecycleService().terminate();
         }
         this.instances.clear();
+    }
+
+    private String getLicenseKey() {
+        return System.getenv("HAZELCAST_LICENSE_KEY");
     }
 }

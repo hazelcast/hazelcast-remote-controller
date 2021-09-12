@@ -8,7 +8,7 @@
     <description>Hazelcast Remote Controller Server Container</description>
     <groupId>com.hazelcast</groupId>
     <artifactId>hazelcast-remote-controller</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.8.1-SNAPSHOT</version>
 
     <repositories>
         <repository>
