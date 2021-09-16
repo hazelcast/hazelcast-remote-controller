@@ -3,6 +3,7 @@
 GEN_LANG="$1"
 
 THRIFT_FILE="remote_controller.thrift"
+THRIFT=${THRIFT:-thrift}
 
 JAVA_PATH="../src/main/java"
 PYTHON_PATH="./python"
@@ -15,22 +16,22 @@ echo $"Generating Thrift bindings for ${GEN_LANG}"
 
 case ${GEN_LANG} in
     java)
-        thrift -r --gen java -out ${JAVA_PATH} ${THRIFT_FILE}
+        $THRIFT -r --gen java -out ${JAVA_PATH} ${THRIFT_FILE}
         ;;
     py)
-        thrift -r --gen py:new_style,utf8strings -out ${PYTHON_PATH} ${THRIFT_FILE}
+        $THRIFT -r --gen py:new_style,utf8strings -out ${PYTHON_PATH} ${THRIFT_FILE}
         ;;
     nodejs)
-        thrift -r --gen js:node -out ${NODEJS_PATH} ${THRIFT_FILE}
+        $THRIFT -r --gen js:node -out ${NODEJS_PATH} ${THRIFT_FILE}
         ;;
     csharp)
-        thrift -r --gen netstd -out ${CSHARP_PATH} ${THRIFT_FILE}
+        $THRIFT -r --gen netstd -out ${CSHARP_PATH} ${THRIFT_FILE}
         ;;
     go)
-        thrift -r --gen go -out ${GOLANG_PATH} ${THRIFT_FILE}
+        $THRIFT -r --gen go -out ${GOLANG_PATH} ${THRIFT_FILE}
         ;;
     cpp)
-        thrift -r --gen cpp -out ${CPP_PATH}  ${THRIFT_FILE}
+        $THRIFT -r --gen cpp -out ${CPP_PATH}  ${THRIFT_FILE}
         ;;
     *)
         echo $"$1 not supported"

@@ -1,6 +1,6 @@
 namespace java com.hazelcast.remotecontroller
 namespace py hzrc
-namespace netstd Hazelcast.Remote
+namespace netstd Hazelcast.Testing.Remote
 namespace cpp hazelcast.client.test.remote
 
 
