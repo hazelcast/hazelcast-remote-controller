@@ -8,6 +8,18 @@ struct Cluster{
     1:string id;
 }
 
+struct CloudCluster{
+    1:string id;
+    2:string name;
+    3:string nameForConnect
+    4:string hazelcastVersion;
+    5:bool isTlsEnabled;
+    6:string state;
+    7:string token;
+    8:string certificatePath
+    9:string tlsPassword
+}
+
 struct Member{
     1:string uuid;
     2:string host;
@@ -48,6 +60,15 @@ service RemoteController {
 
     Cluster splitMemberFromCluster(1:string memberId)
     Cluster mergeMemberToCluster(1:string clusterId, 2:string memberId)
+
+    void login(1:string uri, 2:string apiKey, 3:string apiSecret)
+    CloudCluster createStandardCluster(1:string hazelcastVersion, 2:bool isTlsEnabled)
+    CloudCluster createEnterpriseCluster(1:string cloudProvider, 2:string hazelcastVersion, 3:bool isTlsEnabled)
+    bool scaleUpDownStandardCluster(1:string id, 2:i32 scaleNumber)
+    CloudCluster getCluster(1:string id)
+    CloudCluster stopCluster(1:string id)
+    CloudCluster resumeCluster(1:string id)
+    bool deleteCluster(1:string id)
 
     Response executeOnController(1:string clusterId, 2:string script, 3:Lang lang);
 

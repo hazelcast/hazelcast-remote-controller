@@ -6,14 +6,17 @@ import org.apache.thrift.TException;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.io.IOException;
 import java.util.Locale;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
 
     private ClusterManager clusterManager;
+    private HazelcastCloudManager cloudManager;
 
     public RemoteControllerHandler() {
         this.clusterManager = new ClusterManager();
+        this.cloudManager = new HazelcastCloudManager();
     }
 
     @Override
@@ -86,6 +89,46 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     public Cluster mergeMemberToCluster(String clusterId, String memberId) throws TException {
         //TODO
         return null;
+    }
+
+    @Override
+    public void login(String uri, String apiKey, String apiSecret) {
+        cloudManager.login(uri, apiKey, apiSecret);
+    }
+
+    @Override
+    public CloudCluster createStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
+        return cloudManager.createStandardCluster(hazelcastVersion, isTlsEnabled);
+    }
+
+    @Override
+    public CloudCluster createEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
+        return cloudManager.createEnterpriseCluster(cloudProvider, hazelcastVersion, isTlsEnabled);
+    }
+
+    @Override
+    public boolean scaleUpDownStandardCluster(String id, int scaleNumber) throws TException {
+        return cloudManager.scaleUpDownStandardCluster(id, scaleNumber);
+    }
+
+    @Override
+    public CloudCluster getCluster(String id) {
+        return cloudManager.getCluster(id);
+    }
+
+    @Override
+    public CloudCluster stopCluster(String id) {
+        return cloudManager.stopCluster(id);
+    }
+
+    @Override
+    public CloudCluster resumeCluster(String id) {
+        return cloudManager.resumeCluster(id);
+    }
+
+    @Override
+    public boolean deleteCluster(String id) {
+        return cloudManager.deleteCluster(id);
     }
 
     @Override
