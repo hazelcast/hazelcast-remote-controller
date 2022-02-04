@@ -2,7 +2,6 @@ package com.hazelcast.remotecontroller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hazelcast.internal.util.TimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import net.lingala.zip4j.ZipFile;
@@ -10,7 +9,6 @@ import org.python.jline.internal.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -365,7 +363,7 @@ public class HazelcastCloudManager {
                 zipFile.extractAll(destination.toString());
                 new File(pathResponseZip.toString()).delete();
             }
-            return (Paths.get(pathClusterId.toString(), "certificates")).toString();
+            return (Paths.get(pathClusterId.toString(), "certificates")).toString() + File.separator;
         }
         catch(Exception e)
         {
