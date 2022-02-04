@@ -6,7 +6,6 @@ import org.apache.thrift.TException;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import java.io.IOException;
 import java.util.Locale;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
