@@ -123,9 +123,9 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster getCluster(String id) {
+    public CloudCluster getCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", id);
+            query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", clusterId);
             response = createRequest(query);
             LOG.info(maskValueOfToken(response.body()));
             rootNode = mapper.readTree(response.body()).get("data").get("cluster");
@@ -145,13 +145,13 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster stopCluster(String id) {
+    public CloudCluster stopCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", id);
+            query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             response = createRequest(query);
             LOG.info(maskValueOfToken(response.body()));
-            if(waitForStateOfCluster(id, "STOPPED", TimeUnit.MINUTES.toMillis(5)))
-                return getCluster(id);
+            if(waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(5)))
+                return getCluster(clusterId);
             else
                 throw new Exception("State cannot come to STOPPED");
         } catch (Exception e) {
@@ -160,13 +160,13 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster resumeCluster(String id) {
+    public CloudCluster resumeCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", id);
+            query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             response = createRequest(query);
             LOG.info(maskValueOfToken(response.body()));
-            if(waitForStateOfCluster(id, "RUNNING", TimeUnit.MINUTES.toMillis(5)))
-                return getCluster(id);
+            if(waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(5)))
+                return getCluster(clusterId);
             else
                 throw new Exception("State cannot come to RUNNING");
         } catch (Exception e) {
@@ -175,13 +175,13 @@ public class HazelcastCloudManager {
         }
     }
 
-    public boolean deleteCluster(String id) {
+    public boolean deleteCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", id);
+            query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             response = createRequest(query);
             LOG.info(response.body());
-            waitForDeletedCluster(id, TimeUnit.MINUTES.toMillis(10));
-            LOG.info(String.format("Cluster with id %s is deleted", id));
+            waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(10));
+            LOG.info(String.format("Cluster with id %s is deleted", clusterId));
             return true;
         } catch (Exception e) {
             e.printStackTrace();
