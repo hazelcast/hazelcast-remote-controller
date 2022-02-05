@@ -91,43 +91,43 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public void login(String uri, String apiKey, String apiSecret) {
-        cloudManager.login(uri, apiKey, apiSecret);
+    public void loginToHazelcastCloud(String uri, String apiKey, String apiSecret) {
+        cloudManager.loginToHazelcastCloud(uri, apiKey, apiSecret);
     }
 
     @Override
-    public CloudCluster createStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
-        return cloudManager.createStandardCluster(hazelcastVersion, isTlsEnabled);
+    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
+        return cloudManager.createHazelcastCloudStandardCluster(hazelcastVersion, isTlsEnabled);
     }
 
     @Override
-    public CloudCluster createEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
-        return cloudManager.createEnterpriseCluster(cloudProvider, hazelcastVersion, isTlsEnabled);
+    public CloudCluster createHazelcastCloudEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
+        return cloudManager.createHazelcastCloudEnterpriseCluster(cloudProvider, hazelcastVersion, isTlsEnabled);
     }
 
     @Override
-    public boolean scaleUpDownStandardCluster(String id, int scaleNumber) throws TException {
-        return cloudManager.scaleUpDownStandardCluster(id, scaleNumber);
+    public boolean scaleUpDownHazelcastCloudStandardCluster(String id, int scaleNumber) throws TException {
+        return cloudManager.scaleUpDownHazelcastCloudStandardCluster(id, scaleNumber);
     }
 
     @Override
-    public CloudCluster getCluster(String id) {
-        return cloudManager.getCluster(id);
+    public CloudCluster getHazelcastCloudCluster(String id) {
+        return cloudManager.getHazelcastCloudCluster(id);
     }
 
     @Override
-    public CloudCluster stopCluster(String id) {
-        return cloudManager.stopCluster(id);
+    public CloudCluster stopHazelcastCloudCluster(String id) {
+        return cloudManager.stopHazelcastCloudCluster(id);
     }
 
     @Override
-    public CloudCluster resumeCluster(String id) {
-        return cloudManager.resumeCluster(id);
+    public CloudCluster resumeHazelcastCloudCluster(String id) {
+        return cloudManager.resumeHazelcastCloudCluster(id);
     }
 
     @Override
-    public boolean deleteCluster(String id) {
-        return cloudManager.deleteCluster(id);
+    public boolean deleteHazelcastCloudCluster(String id) {
+        return cloudManager.deleteHazelcastCloudCluster(id);
     }
 
     @Override

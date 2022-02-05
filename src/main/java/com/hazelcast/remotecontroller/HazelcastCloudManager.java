@@ -34,13 +34,13 @@ public class HazelcastCloudManager {
     public HazelcastCloudManager() {
     }
 
-    public void login(String baseUrl, String apiKey, String apiSecret) {
+    public void loginToHazelcastCloud(String baseUrl, String apiKey, String apiSecret) {
         this.uri = URI.create(baseUrl + "/api/v1");
         this.baseUrl = baseUrl;
         bearerToken = getBearerToken(apiKey, apiSecret);
     }
 
-    public CloudCluster createStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
+    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
         try {
             clusterName = "test-cluster-" + System.currentTimeMillis();
             query = String.format("{\"query\":\"mutation {createStarterCluster(input: {name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" clusterType: SMALL totalMemory: 2 hazelcastVersion: \\\"%s\\\" isTlsEnabled: %b } ) { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token} } }\"}",
@@ -56,14 +56,14 @@ public class HazelcastCloudManager {
             rootNode = mapper.readTree(response.body()).get("data").get("createStarterCluster");
             if(!waitForStateOfCluster(rootNode.get("id").asText(), "RUNNING", TimeUnit.MINUTES.toMillis(5)))
                 throw new Exception("Wait for cluster state is not finished as expected");
-            return getCluster(rootNode.get("id").asText());
+            return getHazelcastCloudCluster(rootNode.get("id").asText());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public boolean scaleUpDownStandardCluster(String clusterId, int scaleNumber) {
+    public boolean scaleUpDownHazelcastCloudStandardCluster(String clusterId, int scaleNumber) {
         int currentMemory;
         String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
         try {
@@ -93,7 +93,7 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster createEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
+    public CloudCluster createHazelcastCloudEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
         clusterName = "test-cluster-" + System.currentTimeMillis();
         String enterpriseClusterName = String.format("Enterprise-%s", clusterName);
         var provider = new CloudProviderDetails(cloudProvider);
@@ -114,14 +114,14 @@ public class HazelcastCloudManager {
             rootNode = mapper.readTree(response.body()).get("data").get("createEnterpriseCluster");
             if(!waitForStateOfCluster(rootNode.get("id").asText(), "RUNNING", TimeUnit.MINUTES.toMillis(60)))
                 throw new Exception("Wait for cluster state is not finished as expected");
-            return getCluster(rootNode.get("id").asText());
+            return getHazelcastCloudCluster(rootNode.get("id").asText());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public CloudCluster getCluster(String clusterId) {
+    public CloudCluster getHazelcastCloudCluster(String clusterId) {
         try {
             query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", clusterId);
             response = createRequest(query);
@@ -143,13 +143,13 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster stopCluster(String clusterId) {
+    public CloudCluster stopHazelcastCloudCluster(String clusterId) {
         try {
             query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             response = createRequest(query);
             LOG.info(maskValueOfToken(response.body()));
             if(waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(5)))
-                return getCluster(clusterId);
+                return getHazelcastCloudCluster(clusterId);
             else
                 throw new Exception("State cannot come to STOPPED");
         } catch (Exception e) {
@@ -158,13 +158,13 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster resumeCluster(String clusterId) {
+    public CloudCluster resumeHazelcastCloudCluster(String clusterId) {
         try {
             query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             response = createRequest(query);
             LOG.info(maskValueOfToken(response.body()));
             if(waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(5)))
-                return getCluster(clusterId);
+                return getHazelcastCloudCluster(clusterId);
             else
                 throw new Exception("State cannot come to RUNNING");
         } catch (Exception e) {
@@ -173,7 +173,7 @@ public class HazelcastCloudManager {
         }
     }
 
-    public boolean deleteCluster(String clusterId) {
+    public boolean deleteHazelcastCloudCluster(String clusterId) {
         try {
             query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             response = createRequest(query);
@@ -191,7 +191,7 @@ public class HazelcastCloudManager {
     private HttpResponse<String> createRequest(String query) throws InterruptedException {
         int retryCountForExceptionOfEndpoint = 0;
 
-        // Rarely server returns empty header and that is why a retry mechanism is added.
+        // Rarely server returns empty header, that is why a retry mechanism is added.
         while(retryCountForExceptionOfEndpoint < 3)
         {
             try {
@@ -281,7 +281,7 @@ public class HazelcastCloudManager {
         if(getClusterType(clusterId).equalsIgnoreCase("ENTERPRISE"))
             retryCycle = 120;
         while ((System.currentTimeMillis() - startTime) < timeoutInMillisecond) {
-            if (getCluster(clusterId) == null)
+            if (getHazelcastCloudCluster(clusterId) == null)
                 return;
             TimeUnit.SECONDS.sleep(retryCycle);
         }
