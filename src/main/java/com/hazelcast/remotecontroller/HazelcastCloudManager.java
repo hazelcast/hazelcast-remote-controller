@@ -2,6 +2,8 @@ package com.hazelcast.remotecontroller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.*;
+import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import net.lingala.zip4j.ZipFile;
@@ -9,27 +11,22 @@ import org.python.jline.internal.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.*;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class HazelcastCloudManager {
-    private final HttpClient client = HttpClient.newHttpClient();
-    private HttpRequest request;
+    private static final OkHttpClient client = new OkHttpClient();
     private String baseUrl;
     private URI uri;
     private final ObjectMapper mapper = new ObjectMapper();
-    private String query;
-    private JsonNode rootNode;
-    private HttpResponse<String> response;
     private String bearerToken;
-    private String clusterName;
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static int cidr = 99;
+    private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private Call call;
 
     public HazelcastCloudManager() {
     }
@@ -42,8 +39,8 @@ public class HazelcastCloudManager {
 
     public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
         try {
-            clusterName = "test-cluster-" + System.currentTimeMillis();
-            query = String.format("{\"query\":\"mutation {createStarterCluster(input: {name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" clusterType: SMALL totalMemory: 2 hazelcastVersion: \\\"%s\\\" isTlsEnabled: %b } ) { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token} } }\"}",
+            String clusterName = "test-cluster-" + System.currentTimeMillis();
+            String query = String.format("{\"query\":\"mutation {createStarterCluster(input: {name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" clusterType: SMALL totalMemory: 2 hazelcastVersion: \\\"%s\\\" isTlsEnabled: %b } ) { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token} } }\"}",
                     clusterName,
                     "aws",
                     "us-west-2",
@@ -51,9 +48,9 @@ public class HazelcastCloudManager {
                     isTlsEnabled);
 
             Log.info(String.format("Request query: %s", query));
-            response = createRequest(query);
-            LOG.info(maskValueOfToken(response.body()));
-            rootNode = mapper.readTree(response.body()).get("data").get("createStarterCluster");
+            String responseBody = createRequest(query).body().string();
+            LOG.info(maskValueOfToken(responseBody));
+            JsonNode rootNode = mapper.readTree(responseBody).get("data").get("createStarterCluster");
             if(!waitForStateOfCluster(rootNode.get("id").asText(), "RUNNING", TimeUnit.MINUTES.toMillis(5)))
                 throw new Exception("Wait for cluster state is not finished as expected");
             return getHazelcastCloudCluster(rootNode.get("id").asText());
@@ -67,9 +64,9 @@ public class HazelcastCloudManager {
         int currentMemory;
         String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
         try {
-            query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { specs {totalMemory} } }\" }", clusterId);
-            response = createRequest(query);
-            currentMemory = mapper.readTree(response.body()).get("data").get("cluster").get("specs").get("totalMemory").asInt();
+            String query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { specs {totalMemory} } }\" }", clusterId);
+            String responseBody = createRequest(query).body().string();
+            currentMemory = mapper.readTree(responseBody).get("data").get("cluster").get("specs").get("totalMemory").asInt();
 
             if (currentMemory + scaleNumber <= 0) {
                 LOG.warn("Scaling number is not proper, there is no enough memory and nodes to scale down");
@@ -77,14 +74,17 @@ public class HazelcastCloudManager {
             }
 
             String requestBody = String.format("{\"id\": %s, \"memory\": %d, \"autoScalingEnabled\": false}", clusterId, currentMemory + scaleNumber);
-            request = HttpRequest.newBuilder()
-                    .uri(new URI(requestUrl))
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+            RequestBody body = RequestBody.create(JSON, requestBody);
+            Request request = new Request.Builder()
+                    .url(requestUrl)
+                    .post(body)
                     .header("Content-Type", "application/json")
                     .header("Authorization", String.format("Bearer %s", bearerToken))
                     .build();
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            LOG.info(mapper.readTree(response.body()).get("state"));
+            call = client.newCall(request);
+            Response response = call.execute();
+            responseBody = response.body().string();
+            LOG.info(mapper.readTree(responseBody).get("state"));
             waitForStateOfCluster(clusterId,"RUNNING", TimeUnit.MINUTES.toMillis(1));
             return true;
         } catch (Exception e) {
@@ -94,11 +94,11 @@ public class HazelcastCloudManager {
     }
 
     public CloudCluster createHazelcastCloudEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
-        clusterName = "test-cluster-" + System.currentTimeMillis();
+        String clusterName = "test-cluster-" + System.currentTimeMillis();
         String enterpriseClusterName = String.format("Enterprise-%s", clusterName);
-        var provider = new CloudProviderDetails(cloudProvider);
+        CloudProviderDetails provider = new CloudProviderDetails(cloudProvider);
         try {
-            query = String.format("{ \"query\": \"mutation {createEnterpriseCluster(input:{name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" zones: [\\\"%s\\\"] zoneType: SINGLE instanceType: \\\"%s\\\" instancePerZone: 1 hazelcastVersion: \\\"%s\\\" isPublicAccessEnabled: true cidrBlock: \\\"%s\\\" isTlsEnabled: %b}){id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\" }",
+            String query = String.format("{ \"query\": \"mutation {createEnterpriseCluster(input:{name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" zones: [\\\"%s\\\"] zoneType: SINGLE instanceType: \\\"%s\\\" instancePerZone: 1 hazelcastVersion: \\\"%s\\\" isPublicAccessEnabled: true cidrBlock: \\\"%s\\\" isTlsEnabled: %b}){id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\" }",
                     enterpriseClusterName,
                     cloudProvider,
                     provider.region,
@@ -109,9 +109,9 @@ public class HazelcastCloudManager {
                     isTlsEnabled
             );
             Log.info(String.format("Request query: %s", query));
-            response = createRequest(query);
-            LOG.info(maskValueOfToken(response.body()));
-            rootNode = mapper.readTree(response.body()).get("data").get("createEnterpriseCluster");
+            String responseBody = createRequest(query).body().string();
+            LOG.info(maskValueOfToken(responseBody));
+            JsonNode rootNode = mapper.readTree(responseBody).get("data").get("createEnterpriseCluster");
             if(!waitForStateOfCluster(rootNode.get("id").asText(), "RUNNING", TimeUnit.MINUTES.toMillis(60)))
                 throw new Exception("Wait for cluster state is not finished as expected");
             return getHazelcastCloudCluster(rootNode.get("id").asText());
@@ -123,10 +123,10 @@ public class HazelcastCloudManager {
 
     public CloudCluster getHazelcastCloudCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", clusterId);
-            response = createRequest(query);
-            LOG.info(maskValueOfToken(response.body()));
-            rootNode = mapper.readTree(response.body()).get("data").get("cluster");
+            String query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", clusterId);
+            String responseBody = createRequest(query).body().string();
+            LOG.info(maskValueOfToken(responseBody));
+            JsonNode rootNode = mapper.readTree(responseBody).get("data").get("cluster");
             if(rootNode.asText().equalsIgnoreCase("null"))
                 return null;
 
@@ -145,9 +145,9 @@ public class HazelcastCloudManager {
 
     public CloudCluster stopHazelcastCloudCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
-            response = createRequest(query);
-            LOG.info(maskValueOfToken(response.body()));
+            String query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
+            String responseBody = createRequest(query).body().string();
+            LOG.info(maskValueOfToken(responseBody));
             if(waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(5)))
                 return getHazelcastCloudCluster(clusterId);
             else
@@ -160,9 +160,9 @@ public class HazelcastCloudManager {
 
     public CloudCluster resumeHazelcastCloudCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
-            response = createRequest(query);
-            LOG.info(maskValueOfToken(response.body()));
+            String query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
+            String responseBody = createRequest(query).body().string();
+            LOG.info(maskValueOfToken(responseBody));
             if(waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(5)))
                 return getHazelcastCloudCluster(clusterId);
             else
@@ -175,9 +175,9 @@ public class HazelcastCloudManager {
 
     public boolean deleteHazelcastCloudCluster(String clusterId) {
         try {
-            query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
-            response = createRequest(query);
-            LOG.info(response.body());
+            String query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
+            String responseBody = createRequest(query).body().string();
+            LOG.info(responseBody);
             waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(10));
             LOG.info(String.format("Cluster with id %s is deleted", clusterId));
             return true;
@@ -188,19 +188,23 @@ public class HazelcastCloudManager {
     }
 
 
-    private HttpResponse<String> createRequest(String query) throws InterruptedException {
+    private Response createRequest(String query) throws InterruptedException {
         int retryCountForExceptionOfEndpoint = 0;
 
         // Rarely server returns empty header, that is why a retry mechanism is added.
         while(retryCountForExceptionOfEndpoint < 3)
         {
             try {
-                return client.send(HttpRequest.newBuilder()
-                        .uri(uri)
-                        .POST(HttpRequest.BodyPublishers.ofString(query))
-                        .header("Content-Type", "application/json")
+                RequestBody body = RequestBody.create(JSON, query);
+                Request request = new Request.Builder()
+                        .url(HttpUrl.get(uri))
+                        .post(body)
                         .header("Authorization", String.format("Bearer %s", bearerToken))
-                        .build(), HttpResponse.BodyHandlers.ofString());
+                        .header("Content-Type", "application/json")
+                        .build();
+
+                call = client.newCall(request);
+                return call.execute();
             }
             catch(Exception e)
             {
@@ -216,13 +220,19 @@ public class HazelcastCloudManager {
     {
         String requestUrl = String.format("%s/cluster/%s", baseUrl, clusterId);
         try {
-            request = HttpRequest.newBuilder()
-                    .uri(new URI(requestUrl))
-                    .GET()
+            Request request = new Request.Builder()
+                    .url(requestUrl)
+                    .get()
                     .header("Authorization", String.format("Bearer %s", bearerToken))
                     .build();
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return mapper.readTree(response.body()).get("tlsPassword").asText();
+            call = client.newCall(request);
+            Response response = call.execute();
+            try {
+                return mapper.readTree(response.body().string()).get("tlsPassword").asText();
+            } catch (IOException e) {
+                LOG.warn("Body is null for tlsPassword");
+                return null;
+            }
         }
         catch(Exception e)
         {
@@ -233,17 +243,17 @@ public class HazelcastCloudManager {
 
     private boolean waitForStateOfCluster(String clusterId, String expectedState, long timeoutInMillisecond) {
         String currentState = "";
-        var startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         int retryCycle = 10;
         try {
             if(getClusterType(clusterId).equalsIgnoreCase("ENTERPRISE"))
                 retryCycle = 120;
 
             while ((System.currentTimeMillis() - startTime) < timeoutInMillisecond) {
-                query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { state } }\" }", clusterId);
-                response = createRequest(query);
-                LOG.info(response.body());
-                currentState = mapper.readTree(response.body()).get("data").get("cluster").get("state").asText();
+                String query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { id state } }\" }", clusterId);
+                String responseBody = createRequest(query).body().string();
+                LOG.info(responseBody);
+                currentState = mapper.readTree(responseBody).get("data").get("cluster").get("state").asText();
                 if(currentState.equalsIgnoreCase(expectedState))
                     return true;
                 if(currentState.equalsIgnoreCase("FAILED"))
@@ -264,9 +274,9 @@ public class HazelcastCloudManager {
     private String getClusterType(String clusterId)
     {
         try {
-            query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { productType { name } } }\" }", clusterId);
-            response = createRequest(query);
-            return mapper.readTree(response.body()).get("data").get("cluster").get("productType").get("name").asText();
+            String query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { productType { name } } }\" }", clusterId);
+            Response response = createRequest(query);
+            return mapper.readTree(response.body().string()).get("data").get("cluster").get("productType").get("name").asText();
         }
         catch (Exception e)
         {
@@ -276,7 +286,7 @@ public class HazelcastCloudManager {
     }
 
     private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws Exception {
-        var startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         int retryCycle = 10;
         if(getClusterType(clusterId).equalsIgnoreCase("ENTERPRISE"))
             retryCycle = 120;
@@ -290,14 +300,16 @@ public class HazelcastCloudManager {
 
     private String getBearerToken(String apiKey, String apiSecret) {
         try {
-            query = String.format("{ \"query\": \"mutation { login(apiKey: \\\"%s\\\", apiSecret: \\\"%s\\\") {token} }\" }", apiKey, apiSecret);
-            request = HttpRequest.newBuilder()
-                    .uri(uri)
-                    .POST(HttpRequest.BodyPublishers.ofString(query))
+            String query = String.format("{ \"query\": \"mutation { login(apiKey: \\\"%s\\\", apiSecret: \\\"%s\\\") {token} }\" }", apiKey, apiSecret);
+            RequestBody body = RequestBody.create(JSON, query);
+            Request request = new Request.Builder()
+                    .url(HttpUrl.get(uri))
+                    .post(body)
                     .header("Content-Type", "application/json")
                     .build();
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return mapper.readTree(response.body()).get("data").get("login").get("token").asText();
+            call = client.newCall(request);
+            Response response = call.execute();
+            return mapper.readTree(response.body().string()).get("data").get("login").get("token").asText();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -321,7 +333,7 @@ public class HazelcastCloudManager {
     }
 
     // In order to be able to create more than one enterprise cluster, CIDR blocks should be different.
-    // When we need more than one cluster, I hope it won't generate the same IP :)
+    // Cloud providers don't accept all CIDR, 10.x.0.0/16 is acceptable for all
     private String getProperCidr() {
         Random r = new Random();
         cidr++;
@@ -347,17 +359,18 @@ public class HazelcastCloudManager {
                 destination = Paths.get(pathClusterId.toString(), "certificates");
                 new File(destination.toString()).mkdir();
 
-                String url = String.format("%s/cluster/%s/certificate", baseUrl, clusterId);
-                var newRequest = HttpRequest.newBuilder()
-                        .uri(new URI(url))
+                String cert_url = String.format("%s/cluster/%s/certificate", baseUrl, clusterId);
+                Request request = new Request.Builder()
+                        .url(cert_url)
+                        .get()
                         .header("Accept", "application/zip")
                         .header("Authorization", String.format("Bearer %s", bearerToken))
-                        .GET()
                         .build();
 
-                HttpResponse<byte[]> newResponse = client.send(newRequest, HttpResponse.BodyHandlers.ofByteArray());
+                call = client.newCall(request);
+                Response response = call.execute();
                 try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
-                    stream.write(newResponse.body());
+                    stream.write(response.body().bytes());
                 }
                 ZipFile zipFile = new ZipFile(pathResponseZip.toString());
                 zipFile.extractAll(destination.toString());
