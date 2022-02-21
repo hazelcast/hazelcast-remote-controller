@@ -102,18 +102,27 @@ public class HazelcastCloudManager {
         String enterpriseClusterName = String.format("Enterprise-%s", clusterName);
         CloudProviderDetails provider = new CloudProviderDetails(cloudProvider);
         try {
-            String query = String.format("{ \"query\": \"mutation {createEnterpriseCluster(input:{name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" zones: [\\\"%s\\\"] zoneType: SINGLE instanceType: \\\"%s\\\" instancePerZone: 1 hazelcastVersion: \\\"%s\\\" isPublicAccessEnabled: true cidrBlock: \\\"%s\\\" isTlsEnabled: %b}){id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\" }",
-                    enterpriseClusterName,
-                    cloudProvider,
-                    provider.region,
-                    provider.zone,
-                    provider.instanceType,
-                    hazelcastVersion,
-                    getProperCidr(),
-                    isTlsEnabled
-            );
-            Log.info(String.format("Request query: %s", query));
-            String responseBody = createRequest(query).body().string();
+            int retryCount = 0;
+            String responseBody = null;
+            while (retryCount < 5) {
+                String cidr = getProperCidr();
+                String query = String.format("{ \"query\": \"mutation {createEnterpriseCluster(input:{name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" zones: [\\\"%s\\\"] zoneType: SINGLE instanceType: \\\"%s\\\" instancePerZone: 1 hazelcastVersion: \\\"%s\\\" isPublicAccessEnabled: true cidrBlock: \\\"%s\\\" isTlsEnabled: %b}){id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\" }",
+                        enterpriseClusterName,
+                        cloudProvider,
+                        provider.region,
+                        provider.zone,
+                        provider.instanceType,
+                        hazelcastVersion,
+                        cidr,
+                        isTlsEnabled
+                );
+                Log.info(String.format("Request query: %s", query));
+                responseBody = createRequest(query).body().string();
+                if(!responseBody.contains(String.format("%s is already in use", cidr)))
+                    break;
+                retryCount++;
+                TimeUnit.SECONDS.sleep(30);
+            }
             LOG.info(maskValueOfToken(responseBody));
             JsonNode rootNode = mapper.readTree(responseBody).get("data").get("createEnterpriseCluster");
             if(!waitForStateOfCluster(rootNode.get("id").asText(), "RUNNING", TimeUnit.MINUTES.toMillis(60)))
