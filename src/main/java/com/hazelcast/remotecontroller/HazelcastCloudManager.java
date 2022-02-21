@@ -14,7 +14,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class HazelcastCloudManager {
@@ -24,17 +23,22 @@ public class HazelcastCloudManager {
     private final ObjectMapper mapper = new ObjectMapper();
     private String bearerToken;
     private static final Logger LOG = LogManager.getLogger(Main.class);
-    private static int cidr = 99;
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private Call call;
 
     public HazelcastCloudManager() {
+        if(System.getenv("baseUrl") != null && System.getenv("apiKey") != null && System.getenv("apiSecret") != null)
+            loginToHazelcastCloud(System.getenv("baseUrl"), System.getenv("apiKey"), System.getenv("apiSecret"));
+        else
+            LOG.info("Hazelcast cloud credentials are not set as env variable, please call login method first or cloud API cannot be used with RC");
     }
 
     public void loginToHazelcastCloud(String baseUrl, String apiKey, String apiSecret) {
         this.uri = URI.create(baseUrl + "/api/v1");
         this.baseUrl = baseUrl;
         bearerToken = getBearerToken(apiKey, apiSecret);
+        if(bearerToken == null)
+            LOG.error("Login failed");
     }
 
     public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
@@ -309,7 +313,9 @@ public class HazelcastCloudManager {
                     .build();
             call = client.newCall(request);
             Response response = call.execute();
-            return mapper.readTree(response.body().string()).get("data").get("login").get("token").asText();
+            String loginResponse = response.body().string();
+            LOG.info(maskValueOfToken(loginResponse));
+            return mapper.readTree(loginResponse).get("data").get("login").get("token").asText();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -333,11 +339,29 @@ public class HazelcastCloudManager {
     }
 
     // In order to be able to create more than one enterprise cluster, CIDR blocks should be different.
-    // Cloud providers don't accept all CIDR, 10.x.0.0/16 is acceptable for all
+    // This endpoint provides unique CIDR
     private String getProperCidr() {
-        Random r = new Random();
-        cidr++;
-        return String.format("10." + Integer.toString(cidr) + ".0.0/16");
+        String requestUrl = String.format("%s/dedicated_clusters/available_vpc_cidr", baseUrl);
+        try {
+            Request request = new Request.Builder()
+                    .url(requestUrl)
+                    .get()
+                    .header("Authorization", String.format("Bearer %s", bearerToken))
+                    .build();
+            call = client.newCall(request);
+            Response response = call.execute();
+            try {
+                return mapper.readTree(response.body().string()).get("vpcCidr").asText();
+            } catch (IOException e) {
+                LOG.warn("Body is null for vpcCidr");
+                return null;
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     // It creates a folder with name clusterId under /home/user/
