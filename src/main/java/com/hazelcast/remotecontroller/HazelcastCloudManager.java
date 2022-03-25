@@ -27,8 +27,8 @@ public class HazelcastCloudManager {
     private Call call;
 
     public HazelcastCloudManager() {
-        if(System.getenv("baseUrl") != null && System.getenv("apiKey") != null && System.getenv("apiSecret") != null)
-            loginToHazelcastCloud(System.getenv("baseUrl"), System.getenv("apiKey"), System.getenv("apiSecret"));
+        if(System.getenv("BASE_URL") != null && System.getenv("API_KEY") != null && System.getenv("API_SECRET") != null)
+            loginToHazelcastCloud(System.getenv("BASE_URL"), System.getenv("API_KEY"), System.getenv("API_SECRET"));
         else
             LOG.info("Hazelcast cloud credentials are not set as env variable, please call login method first or cloud API cannot be used with RC");
     }
@@ -94,43 +94,6 @@ public class HazelcastCloudManager {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
-        }
-    }
-
-    public CloudCluster createHazelcastCloudEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
-        String clusterName = "test-cluster-" + System.currentTimeMillis();
-        String enterpriseClusterName = String.format("Enterprise-%s", clusterName);
-        CloudProviderDetails provider = new CloudProviderDetails(cloudProvider);
-        try {
-            int retryCount = 0;
-            String responseBody = null;
-            while (retryCount < 5) {
-                String cidr = getProperCidr();
-                String query = String.format("{ \"query\": \"mutation {createEnterpriseCluster(input:{name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" zones: [\\\"%s\\\"] zoneType: SINGLE instanceType: \\\"%s\\\" instancePerZone: 1 hazelcastVersion: \\\"%s\\\" isPublicAccessEnabled: true cidrBlock: \\\"%s\\\" isTlsEnabled: %b}){id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\" }",
-                        enterpriseClusterName,
-                        cloudProvider,
-                        provider.region,
-                        provider.zone,
-                        provider.instanceType,
-                        hazelcastVersion,
-                        cidr,
-                        isTlsEnabled
-                );
-                Log.info(String.format("Request query: %s", query));
-                responseBody = createRequest(query).body().string();
-                if(!responseBody.contains(String.format("%s is already in use", cidr)))
-                    break;
-                retryCount++;
-                TimeUnit.SECONDS.sleep(30);
-            }
-            LOG.info(maskValueOfToken(responseBody));
-            JsonNode rootNode = mapper.readTree(responseBody).get("data").get("createEnterpriseCluster");
-            if(!waitForStateOfCluster(rootNode.get("id").asText(), "RUNNING", TimeUnit.MINUTES.toMillis(60)))
-                throw new Exception("Wait for cluster state is not finished as expected");
-            return getHazelcastCloudCluster(rootNode.get("id").asText());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 
@@ -259,9 +222,6 @@ public class HazelcastCloudManager {
         long startTime = System.currentTimeMillis();
         int retryCycle = 10;
         try {
-            if(getClusterType(clusterId).equalsIgnoreCase("ENTERPRISE"))
-                retryCycle = 120;
-
             while ((System.currentTimeMillis() - startTime) < timeoutInMillisecond) {
                 String query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { id state } }\" }", clusterId);
                 String responseBody = createRequest(query).body().string();
@@ -284,25 +244,9 @@ public class HazelcastCloudManager {
         }
     }
 
-    private String getClusterType(String clusterId)
-    {
-        try {
-            String query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { productType { name } } }\" }", clusterId);
-            Response response = createRequest(query);
-            return mapper.readTree(response.body().string()).get("data").get("cluster").get("productType").get("name").asText();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws Exception {
         long startTime = System.currentTimeMillis();
         int retryCycle = 10;
-        if(getClusterType(clusterId).equalsIgnoreCase("ENTERPRISE"))
-            retryCycle = 120;
         while ((System.currentTimeMillis() - startTime) < timeoutInMillisecond) {
             if (getHazelcastCloudCluster(clusterId) == null)
                 return;
@@ -345,32 +289,6 @@ public class HazelcastCloudManager {
     private String maskValueOfToken(String json)
     {
         return json.replaceAll("\"token\":\"(.*?)\"", "\"token\":\"******\"");
-    }
-
-    // In order to be able to create more than one enterprise cluster, CIDR blocks should be different.
-    // This endpoint provides unique CIDR
-    private String getProperCidr() {
-        String requestUrl = String.format("%s/dedicated_clusters/available_vpc_cidr", baseUrl);
-        try {
-            Request request = new Request.Builder()
-                    .url(requestUrl)
-                    .get()
-                    .header("Authorization", String.format("Bearer %s", bearerToken))
-                    .build();
-            call = client.newCall(request);
-            Response response = call.execute();
-            try {
-                return mapper.readTree(response.body().string()).get("vpcCidr").asText();
-            } catch (IOException e) {
-                LOG.warn("Body is null for vpcCidr");
-                return null;
-            }
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     // It creates a folder with name clusterId under /home/user/
@@ -416,47 +334,5 @@ public class HazelcastCloudManager {
             e.printStackTrace();
             return null;
         }
-    }
-}
-
-class CloudProviderDetails
-{
-    String region;
-    String zone;
-    String instanceType;
-
-    public CloudProviderDetails(String providerName)
-    {
-        // These variables are hardcoded here but if we would like to use other regions, zones, instanceTypes we can set it them to env variable.
-        // Not all regions have these kinds of instance types. Available ones are set.
-        // There are some endpoints to decide regions and zones but as they are not so effective. First we need to get region then, zone then check instance type is available. If it is not check second region and so on.
-        // That is why variables are set like that.
-
-        switch (providerName)
-        {
-            case "aws":
-                region = "us-west-2";
-                zone = "us-west-2a";
-                instanceType = "m5.large";
-                break;
-            case "azure":
-                region = "westus2";
-                zone = "1";
-                instanceType = "Standard_E2_v3";
-                break;
-            case "gcp":
-                region = "us-west2";
-                zone = "us-west2-a";
-                instanceType = "n1-highmem-4";
-                break;
-        }
-
-        if(System.getenv("region") != null)
-            region = System.getenv("region");
-        if(System.getenv("zone") != null)
-            zone = System.getenv("zone");
-        if(System.getenv("instance_type") != null)
-            instanceType = System.getenv("instance_type");
-
     }
 }
