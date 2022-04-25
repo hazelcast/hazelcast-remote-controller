@@ -63,7 +63,6 @@ service RemoteController {
 
     void loginToHazelcastCloud(1:string uri, 2:string apiKey, 3:string apiSecret)
     CloudCluster createHazelcastCloudStandardCluster(1:string hazelcastVersion, 2:bool isTlsEnabled)
-    CloudCluster createHazelcastCloudEnterpriseCluster(1:string cloudProvider, 2:string hazelcastVersion, 3:bool isTlsEnabled)
     bool scaleUpDownHazelcastCloudStandardCluster(1:string id, 2:i32 scaleNumber)
     CloudCluster getHazelcastCloudCluster(1:string id)
     CloudCluster stopHazelcastCloudCluster(1:string id)

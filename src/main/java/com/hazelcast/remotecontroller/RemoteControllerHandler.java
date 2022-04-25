@@ -101,11 +101,6 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public CloudCluster createHazelcastCloudEnterpriseCluster(String cloudProvider, String hazelcastVersion, boolean isTlsEnabled) {
-        return cloudManager.createHazelcastCloudEnterpriseCluster(cloudProvider, hazelcastVersion, isTlsEnabled);
-    }
-
-    @Override
     public boolean scaleUpDownHazelcastCloudStandardCluster(String id, int scaleNumber) throws TException {
         return cloudManager.scaleUpDownHazelcastCloudStandardCluster(id, scaleNumber);
     }
