@@ -14,7 +14,7 @@ Hazelcast Cluster lifecycle manager for native client tests. Server container an
 #### Pre-request for usage of Cloud API
 Cloud credentials should be added as an env variable; baseUrl, apiKey, apiSecret; i.e. baseUrl=https://uat.hazelcast.cloud
 #### API for native clients
-* Create Standard/Enterprise and SSL enabled/disabled hazelcast cloud cluster
+* Create Standard and SSL enabled/disabled hazelcast cloud cluster
 * Stop/Resume/Delete cloud cluster
 * Scale up/down cloud cluster
 
