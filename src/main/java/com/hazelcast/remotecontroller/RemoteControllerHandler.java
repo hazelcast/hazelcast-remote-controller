@@ -15,7 +15,6 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     public RemoteControllerHandler() {
         this.clusterManager = new ClusterManager();
-        this.cloudManager = new HazelcastCloudManager();
     }
 
     @Override
@@ -91,12 +90,21 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public void loginToHazelcastCloud(String uri, String apiKey, String apiSecret) {
+    public void loginToHazelcastCloudUsingEnvironment() throws TException {
+        if(cloudManager == null)
+            cloudManager = new HazelcastCloudManager();
+        cloudManager.loginToHazelcastCloudUsingEnvironment();
+    }
+
+    @Override
+    public void loginToHazelcastCloud(String uri, String apiKey, String apiSecret) throws TException {
+        if(cloudManager == null)
+            cloudManager = new HazelcastCloudManager();
         cloudManager.loginToHazelcastCloud(uri, apiKey, apiSecret);
     }
 
     @Override
-    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
+    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) throws TException {
         return cloudManager.createHazelcastCloudStandardCluster(hazelcastVersion, isTlsEnabled);
     }
 
@@ -106,22 +114,22 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public CloudCluster getHazelcastCloudCluster(String id) {
+    public CloudCluster getHazelcastCloudCluster(String id) throws TException {
         return cloudManager.getHazelcastCloudCluster(id);
     }
 
     @Override
-    public CloudCluster stopHazelcastCloudCluster(String id) {
+    public CloudCluster stopHazelcastCloudCluster(String id) throws TException {
         return cloudManager.stopHazelcastCloudCluster(id);
     }
 
     @Override
-    public CloudCluster resumeHazelcastCloudCluster(String id) {
+    public CloudCluster resumeHazelcastCloudCluster(String id) throws TException {
         return cloudManager.resumeHazelcastCloudCluster(id);
     }
 
     @Override
-    public boolean deleteHazelcastCloudCluster(String id) {
+    public boolean deleteHazelcastCloudCluster(String id) throws TException {
         return cloudManager.deleteHazelcastCloudCluster(id);
     }
 

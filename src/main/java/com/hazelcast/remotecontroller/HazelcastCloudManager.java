@@ -29,21 +29,24 @@ public class HazelcastCloudManager {
     private final int timeoutForClusterStateWait = 5;
 
     public HazelcastCloudManager() {
+    }
+
+    public void loginToHazelcastCloudUsingEnvironment() throws CloudException {
         if(System.getenv("BASE_URL") != null && System.getenv("API_KEY") != null && System.getenv("API_SECRET") != null)
             loginToHazelcastCloud(System.getenv("BASE_URL"), System.getenv("API_KEY"), System.getenv("API_SECRET"));
         else
-            LOG.info("Hazelcast cloud credentials are not set as env variable, please call login method first or cloud API cannot be used with RC");
+            throw new CloudException("Not all required environment variables are not set");
     }
 
-    public void loginToHazelcastCloud(String url, String apiKey, String apiSecret) {
+    public void loginToHazelcastCloud(String url, String apiKey, String apiSecret) throws CloudException {
         uri = URI.create(url + "/api/v1");
         baseUrl = url;
         bearerToken = getBearerToken(apiKey, apiSecret);
         if(bearerToken == null)
-            LOG.error("Login failed");
+            throw new CloudException("Login failed");
     }
 
-    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) {
+    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
         try {
             String clusterName = "test-cluster-" + UUID.randomUUID();
             String query = String.format("{\"query\":\"mutation {createStarterCluster(input: {name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" clusterType: SMALL totalMemory: 2 hazelcastVersion: \\\"%s\\\" isTlsEnabled: %b } ) { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token} } }\"}",
@@ -63,11 +66,11 @@ public class HazelcastCloudManager {
             return getHazelcastCloudCluster(clusterId);
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            throw new CloudException("Create cluster failed, error message: " + e.getMessage());
         }
     }
 
-    public boolean scaleUpDownHazelcastCloudStandardCluster(String clusterId, int scaleNumber) {
+    public boolean scaleUpDownHazelcastCloudStandardCluster(String clusterId, int scaleNumber) throws CloudException {
         int currentMemory;
         String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
         try {
@@ -96,11 +99,11 @@ public class HazelcastCloudManager {
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            throw new CloudException("Scale up/down is failed, error message is: " + e.getMessage());
         }
     }
 
-    public CloudCluster getHazelcastCloudCluster(String clusterId) {
+    public CloudCluster getHazelcastCloudCluster(String clusterId) throws CloudException {
         try {
             String query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", clusterId);
             String responseBody = prepareAndSendRequest(query).body().string();
@@ -118,11 +121,11 @@ public class HazelcastCloudManager {
             return cluster;
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            throw new CloudException("Get hazelcast cluster is failed, error message is: " + e.getMessage());
         }
     }
 
-    public CloudCluster stopHazelcastCloudCluster(String clusterId) {
+    public CloudCluster stopHazelcastCloudCluster(String clusterId) throws CloudException {
         try {
             String query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             String responseBody = prepareAndSendRequest(query).body().string();
@@ -133,11 +136,11 @@ public class HazelcastCloudManager {
                 throw new Exception("State cannot become to STOPPED");
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            throw new CloudException("Stop hazelcast cloud is failed, error message is: " + e.getMessage());
         }
     }
 
-    public CloudCluster resumeHazelcastCloudCluster(String clusterId) {
+    public CloudCluster resumeHazelcastCloudCluster(String clusterId) throws CloudException {
         try {
             String query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             String responseBody = prepareAndSendRequest(query).body().string();
@@ -145,14 +148,14 @@ public class HazelcastCloudManager {
             if(waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait)))
                 return getHazelcastCloudCluster(clusterId);
             else
-                throw new Exception("State cannot become RUNNING");
+                throw new CloudException("State cannot become RUNNING");
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            throw new CloudException("Resume hazelcast cloud cluster is failed, error message is: " + e.getMessage());
         }
     }
 
-    public boolean deleteHazelcastCloudCluster(String clusterId) {
+    public boolean deleteHazelcastCloudCluster(String clusterId) throws CloudException {
         try {
             String query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
             String responseBody = prepareAndSendRequest(query).body().string();
@@ -162,7 +165,7 @@ public class HazelcastCloudManager {
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            throw new CloudException("Delete hazelcast cloud cluster is failed, error message is: " + e.getMessage());
         }
     }
 

@@ -41,6 +41,11 @@ enum Lang{
 exception ServerException {
     1:string message;
 }
+
+exception CloudException {
+    1:string message;
+}
+
 service RemoteController {
     bool ping();
     bool clean();
@@ -61,13 +66,14 @@ service RemoteController {
     Cluster splitMemberFromCluster(1:string memberId)
     Cluster mergeMemberToCluster(1:string clusterId, 2:string memberId)
 
-    void loginToHazelcastCloud(1:string uri, 2:string apiKey, 3:string apiSecret)
-    CloudCluster createHazelcastCloudStandardCluster(1:string hazelcastVersion, 2:bool isTlsEnabled)
-    bool scaleUpDownHazelcastCloudStandardCluster(1:string id, 2:i32 scaleNumber)
-    CloudCluster getHazelcastCloudCluster(1:string id)
-    CloudCluster stopHazelcastCloudCluster(1:string id)
-    CloudCluster resumeHazelcastCloudCluster(1:string id)
-    bool deleteHazelcastCloudCluster(1:string id)
+    void loginToHazelcastCloudUsingEnvironment() throws (1:CloudException cloudException)
+    void loginToHazelcastCloud(1:string uri, 2:string apiKey, 3:string apiSecret) throws (1:CloudException cloudException)
+    CloudCluster createHazelcastCloudStandardCluster(1:string hazelcastVersion, 2:bool isTlsEnabled) throws (1:CloudException cloudException)
+    bool scaleUpDownHazelcastCloudStandardCluster(1:string id, 2:i32 scaleNumber) throws (1:CloudException cloudException)
+    CloudCluster getHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
+    CloudCluster stopHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
+    CloudCluster resumeHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
+    bool deleteHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
 
     Response executeOnController(1:string clusterId, 2:string script, 3:Lang lang);
 
