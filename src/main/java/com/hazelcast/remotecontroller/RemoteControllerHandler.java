@@ -105,32 +105,38 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     @Override
     public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) throws TException {
-        return cloudManager.createHazelcastCloudStandardCluster(hazelcastVersion, isTlsEnabled);
+        return getCloudManager().createHazelcastCloudStandardCluster(hazelcastVersion, isTlsEnabled);
     }
 
     @Override
     public boolean scaleUpDownHazelcastCloudStandardCluster(String id, int scaleNumber) throws TException {
-        return cloudManager.scaleUpDownHazelcastCloudStandardCluster(id, scaleNumber);
+        return getCloudManager().scaleUpDownHazelcastCloudStandardCluster(id, scaleNumber);
     }
 
     @Override
     public CloudCluster getHazelcastCloudCluster(String id) throws TException {
-        return cloudManager.getHazelcastCloudCluster(id);
+        return getCloudManager().getHazelcastCloudCluster(id);
     }
 
     @Override
     public CloudCluster stopHazelcastCloudCluster(String id) throws TException {
-        return cloudManager.stopHazelcastCloudCluster(id);
+        return getCloudManager().stopHazelcastCloudCluster(id);
     }
 
     @Override
     public CloudCluster resumeHazelcastCloudCluster(String id) throws TException {
-        return cloudManager.resumeHazelcastCloudCluster(id);
+        return getCloudManager().resumeHazelcastCloudCluster(id);
     }
 
     @Override
     public boolean deleteHazelcastCloudCluster(String id) throws TException {
-        return cloudManager.deleteHazelcastCloudCluster(id);
+        return getCloudManager().deleteHazelcastCloudCluster(id);
+    }
+
+    private HazelcastCloudManager getCloudManager() throws CloudException {
+        if(cloudManager == null)
+            throw new CloudException("It seems cloud manager is null, did you login?");
+        return cloudManager;
     }
 
     @Override

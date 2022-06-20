@@ -172,7 +172,6 @@ public class HazelcastCloudManager {
 
     private Response prepareAndSendRequest(String query) throws InterruptedException {
         int retryCountForExceptionOfEndpoint = 0;
-
         // Rarely server returns empty header, that is why a retry mechanism is added.
         while(retryCountForExceptionOfEndpoint < 3)
         {
@@ -250,7 +249,7 @@ public class HazelcastCloudManager {
         }
     }
 
-    private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws Exception {
+    private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws CloudException, InterruptedException {
         long startTime = System.currentTimeMillis();
         int retryCycle = 10;
         while ((System.currentTimeMillis() - startTime) < timeoutInMillisecond) {
@@ -258,7 +257,7 @@ public class HazelcastCloudManager {
                 return;
             TimeUnit.SECONDS.sleep(retryCycle);
         }
-        throw new Exception(String.format("The cluster is not deleted in %d millisecond", timeoutInMillisecond));
+        throw new CloudException(String.format("The cluster is not deleted in %d millisecond", timeoutInMillisecond));
     }
 
     private String getBearerToken(String apiKey, String apiSecret) {
