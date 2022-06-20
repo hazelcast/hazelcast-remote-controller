@@ -133,7 +133,7 @@ public class HazelcastCloudManager {
             if(waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait)))
                 return getHazelcastCloudCluster(clusterId);
             else
-                throw new Exception("State cannot become to STOPPED");
+                throw new CloudException("State cannot become STOPPED");
         } catch (Exception e) {
             e.printStackTrace();
             throw new CloudException("Stop hazelcast cloud is failed, error message is: " + e.getMessage());
