@@ -66,13 +66,58 @@ service RemoteController {
     Cluster splitMemberFromCluster(1:string memberId)
     Cluster mergeMemberToCluster(1:string clusterId, 2:string memberId)
 
+    /**
+     * Reads the environment variables and calls loginToHazelcastCloud() method with these variables.
+     * @throws CloudException
+     */
     void loginToHazelcastCloudUsingEnvironment() throws (1:CloudException cloudException)
+
+    /**
+     * Logins the hazelcast cloud, sets the bearer token, uri and baseUrl to HazelcastCloudManager then it will be ready to use cloud API
+     * @throws CloudException
+     */
     void loginToHazelcastCloud(1:string uri, 2:string apiKey, 3:string apiSecret) throws (1:CloudException cloudException)
+
+    /**
+     * Creates a standard cluster
+     * @return CloudCluster
+     * @throws CloudException
+     */
     CloudCluster createHazelcastCloudStandardCluster(1:string hazelcastVersion, 2:bool isTlsEnabled) throws (1:CloudException cloudException)
-    bool scaleUpDownHazelcastCloudStandardCluster(1:string id, 2:i32 scaleNumber) throws (1:CloudException cloudException)
+
+    /**
+     * Scaling up and down a given cluster
+     * @return boolean
+     * @throws CloudException
+     */
+    bool scaleUpDownHazelcastCloudStandardCluster(1:string id, 2:i32 incrementalNodesCount) throws (1:CloudException cloudException)
+
+    /**
+     * Get information of the given cluster
+     * @return CloudCluster
+     * @throws CloudException
+     */
     CloudCluster getHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
+
+    /**
+     * Stops the given cluster
+     * @return CloudCluster
+     * @throws CloudException
+     */
     CloudCluster stopHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
+
+    /**
+     * Resumes the given cluster
+     * @return CloudCluster
+     * @throws CloudException
+     */
     CloudCluster resumeHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
+
+    /**
+     * Deletes the given cluster
+     * @return boolean
+     * @throws CloudException
+     */
     bool deleteHazelcastCloudCluster(1:string id) throws (1:CloudException cloudException)
 
     Response executeOnController(1:string clusterId, 2:string script, 3:Lang lang);

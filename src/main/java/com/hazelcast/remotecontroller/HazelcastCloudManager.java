@@ -14,6 +14,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -31,11 +33,13 @@ public class HazelcastCloudManager {
     public HazelcastCloudManager() {
     }
 
+
     public void loginToHazelcastCloudUsingEnvironment() throws CloudException {
-        if(System.getenv("BASE_URL") != null && System.getenv("API_KEY") != null && System.getenv("API_SECRET") != null)
+        List<String> notSetEnvironmentVariables = checkEnvironmentVariables();
+        if(notSetEnvironmentVariables.isEmpty())
             loginToHazelcastCloud(System.getenv("BASE_URL"), System.getenv("API_KEY"), System.getenv("API_SECRET"));
         else
-            throw new CloudException("Not all required environment variables are not set");
+            throw new CloudException("Not all required environment variables are set. These are not set ones: " + notSetEnvironmentVariables);
     }
 
     public void loginToHazelcastCloud(String url, String apiKey, String apiSecret) throws CloudException {
@@ -56,7 +60,7 @@ public class HazelcastCloudManager {
                     hazelcastVersion,
                     isTlsEnabled);
 
-            Log.info(String.format("Request query: %s", query));
+            LOG.info(String.format("Request query: %s", query));
             String responseBody = prepareAndSendRequest(query).body().string();
             LOG.info(maskValueOfToken(responseBody));
             JsonNode rootNode = mapper.readTree(responseBody).get("data").get("createStarterCluster");
@@ -65,12 +69,11 @@ public class HazelcastCloudManager {
                 throw new Exception("Wait for cluster state is not finished as expected");
             return getHazelcastCloudCluster(clusterId);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new CloudException("Create cluster failed, error message: " + e.getMessage());
         }
     }
 
-    public boolean scaleUpDownHazelcastCloudStandardCluster(String clusterId, int scaleNumber) throws CloudException {
+    public boolean scaleUpDownHazelcastCloudStandardCluster(String clusterId, int incrementalNodesCount) throws CloudException {
         int currentMemory;
         String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
         try {
@@ -78,12 +81,12 @@ public class HazelcastCloudManager {
             String responseBody = prepareAndSendRequest(query).body().string();
             currentMemory = mapper.readTree(responseBody).get("data").get("cluster").get("specs").get("totalMemory").asInt();
 
-            if (currentMemory + scaleNumber <= 0) {
+            if (currentMemory + incrementalNodesCount <= 0) {
                 LOG.warn("Scaling number is not proper, there is no enough memory and nodes to scale down");
                 return false;
             }
 
-            String requestBody = String.format("{\"id\": %s, \"memory\": %d, \"autoScalingEnabled\": false}", clusterId, currentMemory + scaleNumber);
+            String requestBody = String.format("{\"id\": %s, \"memory\": %d, \"autoScalingEnabled\": false}", clusterId, currentMemory + incrementalNodesCount);
             RequestBody body = RequestBody.create(JSON, requestBody);
             Request request = new Request.Builder()
                     .url(requestUrl)
@@ -98,7 +101,6 @@ public class HazelcastCloudManager {
             waitForStateOfCluster(clusterId,"RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new CloudException("Scale up/down is failed, error message is: " + e.getMessage());
         }
     }
@@ -170,7 +172,7 @@ public class HazelcastCloudManager {
     }
 
 
-    private Response prepareAndSendRequest(String query) throws InterruptedException {
+    private Response prepareAndSendRequest(String query) throws InterruptedException, CloudException {
         int retryCountForExceptionOfEndpoint = 0;
         // Rarely server returns empty header, that is why a retry mechanism is added.
         while(retryCountForExceptionOfEndpoint < 3)
@@ -194,11 +196,10 @@ public class HazelcastCloudManager {
             retryCountForExceptionOfEndpoint++;
             TimeUnit.SECONDS.sleep(2);
         }
-        return null;
+        throw new CloudException("Request cannot send successfully after 3 tries");
     }
 
-    private String getTlsPassword(String clusterId)
-    {
+    private String getTlsPassword(String clusterId) {
         String requestUrl = String.format("%s/cluster/%s", baseUrl, clusterId);
         try {
             Request request = new Request.Builder()
@@ -210,19 +211,18 @@ public class HazelcastCloudManager {
             Response response = call.execute();
             try {
                 return mapper.readTree(response.body().string()).get("tlsPassword").asText();
-            } catch (IOException e) {
-                LOG.warn("Body is null for tlsPassword");
-                return null;
+            } catch (Exception e) {
+                throw new CloudException("Body is null for tlsPassword");
             }
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            LOG.warn(e.getMessage());
             return null;
         }
     }
 
-    private boolean waitForStateOfCluster(String clusterId, String expectedState, long timeoutInMillisecond) {
+    private boolean waitForStateOfCluster(String clusterId, String expectedState, long timeoutInMillisecond) throws CloudException {
         String currentState = "";
         long startTime = System.currentTimeMillis();
         int retryCycle = 10;
@@ -236,16 +236,13 @@ public class HazelcastCloudManager {
                     return true;
                 if(currentState.equalsIgnoreCase("FAILED"))
                 {
-                    LOG.error("Cluster is FAILED");
-                    return false;
+                    throw new CloudException("Cluster is failed");
                 }
                 TimeUnit.SECONDS.sleep(retryCycle);
             }
-            LOG.error(String.format("The cluster could not come to the given state in %d millisecond", timeoutInMillisecond));
-            return false;
+            throw new CloudException(String.format("The cluster could not come to the given state in %d millisecond", timeoutInMillisecond));
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            throw new CloudException("Wait for state of cluster failed. Error message is: " + e.getMessage());
         }
     }
 
@@ -253,14 +250,14 @@ public class HazelcastCloudManager {
         long startTime = System.currentTimeMillis();
         int retryCycle = 10;
         while ((System.currentTimeMillis() - startTime) < timeoutInMillisecond) {
-            if (getHazelcastCloudCluster(clusterId) == null)
+            if(getHazelcastCloudCluster(clusterId) == null)
                 return;
             TimeUnit.SECONDS.sleep(retryCycle);
         }
         throw new CloudException(String.format("The cluster is not deleted in %d millisecond", timeoutInMillisecond));
     }
 
-    private String getBearerToken(String apiKey, String apiSecret) {
+    private String getBearerToken(String apiKey, String apiSecret) throws CloudException {
         try {
             String query = String.format("{ \"query\": \"mutation { login(apiKey: \\\"%s\\\", apiSecret: \\\"%s\\\") {token} }\" }", apiKey, apiSecret);
             RequestBody body = RequestBody.create(JSON, query);
@@ -275,22 +272,23 @@ public class HazelcastCloudManager {
             LOG.info(maskValueOfToken(loginResponse));
             return mapper.readTree(loginResponse).get("data").get("login").get("token").asText();
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new CloudException("Get bearer token is failed");
         }
     }
 
-    private String getConnectionName(String clusterId) {
+    // It is not possible to connect a cluster with its actual name, it seems a bug of the cloud API, that method is a workaround.
+    // There could be a better way to get this name, TODO: contact with cloud team.
+    private String getConnectionName(String clusterId) throws CloudException {
         if (baseUrl.contains("uat.hazelcast.cloud"))
             return String.format("ua-%s", clusterId);
         else if (baseUrl.contains("cloud.hazelcast.com"))
             return String.format("pr-%s", clusterId);
         else {
-            LOG.error("Given base url isn't known");
-            return null;
+            throw new CloudException("Given base url isn't known and connection name cannot be created");
         }
     }
 
+    // It replaces the  value of token with *** in a response body. Such as bearer token, discovery token.
     private String maskValueOfToken(String json)
     {
         return json.replaceAll("\"token\":\"(.*?)\"", "\"token\":\"******\"");
@@ -298,8 +296,7 @@ public class HazelcastCloudManager {
 
     // It creates a folder with name clusterId under /home/user/
     // Then it downloads the certificates for the cluster and put them in the created folder
-    private String downloadCertificatesAndGetPath(String clusterId)
-    {
+    private String downloadCertificatesAndGetPath(String clusterId) throws CloudException {
         try
         {
             String userHome = System.getProperty("user.home");
@@ -314,8 +311,7 @@ public class HazelcastCloudManager {
         }
         catch(Exception e)
         {
-            e.printStackTrace();
-            return null;
+            throw new CloudException("Problem occurred during certificates download, error message is: " + e.getMessage());
         }
     }
 
@@ -343,5 +339,17 @@ public class HazelcastCloudManager {
         ZipFile zipFile = new ZipFile(pathResponseZip.toString());
         zipFile.extractAll(destination.toString());
         new File(pathResponseZip.toString()).delete();
+    }
+
+    private List<String> checkEnvironmentVariables()
+    {
+        ArrayList<String> envVariables = new ArrayList<>();
+        if(System.getenv("BASE_URL") == null)
+            envVariables.add("BASE_URL");
+        if(System.getenv("API_KEY") == null)
+            envVariables.add("API_KEY");
+        if(System.getenv("API_SECRET") == null)
+            envVariables.add("API_SECRET");
+        return envVariables;
     }
 }
