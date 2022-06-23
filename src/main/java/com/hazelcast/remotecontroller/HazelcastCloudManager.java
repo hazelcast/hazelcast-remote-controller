@@ -32,8 +32,9 @@ public class HazelcastCloudManager {
     public HazelcastCloudManager() {
     }
 
-
     public void loginToHazelcastCloudUsingEnvironment() throws CloudException {
+
+        // StringUtil.isNullOrEmpty() can be used, but somehow it throws class not found exception. Needed to be investigated.
         String baseUrl = System.getenv("BASE_URL");
         String apiKey = System.getenv("API_KEY");
         String apiSecret = System.getenv("API_SECRET");
