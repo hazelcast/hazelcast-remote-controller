@@ -109,8 +109,8 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public boolean scaleUpDownHazelcastCloudStandardCluster(String id, int scaleNumber) throws TException {
-        return getCloudManager().scaleUpDownHazelcastCloudStandardCluster(id, scaleNumber);
+    public void setClusterMemberCount(String id, int scaleNumber) throws TException {
+        getCloudManager().setClusterMemberCount(id, scaleNumber);
     }
 
     @Override
@@ -129,8 +129,8 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public boolean deleteHazelcastCloudCluster(String id) throws TException {
-        return getCloudManager().deleteHazelcastCloudCluster(id);
+    public void deleteHazelcastCloudCluster(String id) throws TException {
+        getCloudManager().deleteHazelcastCloudCluster(id);
     }
 
     private HazelcastCloudManager getCloudManager() throws CloudException {
