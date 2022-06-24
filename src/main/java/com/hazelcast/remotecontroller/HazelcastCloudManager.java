@@ -81,7 +81,7 @@ public class HazelcastCloudManager {
             return getHazelcastCloudCluster(clusterId);
         } catch (Exception e) {
             // Cluster id could be also empty if a problem occurred before cluster id exist
-            throw new CloudException(String.format("Create cluster with id %s is failed, Rc stack trace is: ", clusterId, e.getStackTrace()));
+            throw new CloudException(String.format("Create cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -103,7 +103,7 @@ public class HazelcastCloudManager {
             LOG.info(mapper.readTree(responseBody).get("state"));
             waitForStateOfCluster(clusterId,"RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
         } catch (Exception e) {
-            throw new CloudException(String.format("Set member size of cluster with id %s is failed, Rc stack trace is: %s", clusterId, e.getStackTrace()));
+            throw new CloudException(String.format("Set member size of cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -124,7 +124,7 @@ public class HazelcastCloudManager {
             }
             return cluster;
         } catch (Exception e) {
-            throw new CloudException(String.format("Get cluster with id %s is failed, Rc stack trace is: ", clusterId, e.getStackTrace()));
+            throw new CloudException(String.format("Get cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -148,7 +148,7 @@ public class HazelcastCloudManager {
             waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
             return getHazelcastCloudCluster(clusterId);
         } catch (Exception e) {
-            throw new CloudException(String.format("Resume cluster with id %s is failed, Rc stack trace is: ", clusterId, e.getStackTrace()));
+            throw new CloudException(String.format("Resume cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -160,13 +160,13 @@ public class HazelcastCloudManager {
             waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
             LOG.info(String.format("Cluster with id %s is deleted", clusterId));
         } catch (Exception e) {
-            throw new CloudException(String.format("Delete hazelcast cloud cluster with id %s is failed, Rc stack trace is: %s", clusterId, e.getMessage()));
+            throw new CloudException(String.format("Delete hazelcast cloud cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
     private Response prepareAndSendRequest(String query) throws InterruptedException, CloudException {
         int retryCountForExceptionOfEndpoint = 0;
-        Exception temp = new Exception();
+        Exception temp = null;
         // Rarely server returns empty header, that is why a retry mechanism is added.
         while(retryCountForExceptionOfEndpoint < 3)
         {
@@ -193,6 +193,11 @@ public class HazelcastCloudManager {
         throw new CloudException(String.format("Request cannot send successfully after 3 tries, last exception stack trace is: %s", Arrays.toString(temp.getStackTrace())));
     }
 
+    // Get tlsPassword method uses Rest API instead of GraphQL API.
+    // In getHazelcastCloudCluster() method, first getting the cluster with GraphQL api and then if tls is enabled, certificate download and tls password requests are sent via Rest API.
+    // During delete cluster process, in a corner case, getHazelcastCloudCluster() method works and cluster returns, but until getTlsPassword() method call, cluster is deleted.
+    // That is why getTlsPassword() methods doesn't throw exception, it returns null. It shouldn't throw exception in this corner case
+    // There cloud be improvement for this logic.
     private String getTlsPassword(String clusterId) {
         String requestUrl = String.format("%s/cluster/%s", baseUrl, clusterId);
         try {
@@ -237,10 +242,11 @@ public class HazelcastCloudManager {
             }
             throw new CloudException(String.format("The cluster with id %s could not come to the given state in %d millisecond", clusterId, timeoutInMillisecond));
         } catch (Exception e) {
-            throw new CloudException(String.format("Wait for state of cluster with id %s failed. Rc stack trace is: %s", clusterId, e.getStackTrace()));
+            throw new CloudException(String.format("Wait for state of cluster with id %s failed. Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
+    // For a deleted cluster we cannot use the waitForStateOfCluster() method, its logic is different. That is why another method is added for delete cluster process
     private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws CloudException, InterruptedException {
         long startTime = System.currentTimeMillis();
         while (true) {
@@ -329,8 +335,11 @@ public class HazelcastCloudManager {
 
         call = client.newCall(request);
         Response response = call.execute();
-        try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
+        FileOutputStream stream = new FileOutputStream(pathResponseZip.toString());
+        try {
             stream.write(response.body().bytes());
+        } finally {
+            stream.close();
         }
 
         ZipFile zipFile = new ZipFile(pathResponseZip.toString());
