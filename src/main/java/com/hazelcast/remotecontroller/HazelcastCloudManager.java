@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -165,6 +166,7 @@ public class HazelcastCloudManager {
 
     private Response prepareAndSendRequest(String query) throws InterruptedException, CloudException {
         int retryCountForExceptionOfEndpoint = 0;
+        Exception temp = new Exception();
         // Rarely server returns empty header, that is why a retry mechanism is added.
         while(retryCountForExceptionOfEndpoint < 3)
         {
@@ -182,12 +184,13 @@ public class HazelcastCloudManager {
             }
             catch(Exception e)
             {
+                temp = e;
                 Log.warn(e.toString());
             }
             retryCountForExceptionOfEndpoint++;
             TimeUnit.SECONDS.sleep(2);
         }
-        throw new CloudException("Request cannot send successfully after 3 tries");
+        throw new CloudException(String.format("Request cannot send successfully after 3 tries, last exception stack trace is: %s", Arrays.toString(temp.getStackTrace())));
     }
 
     private String getTlsPassword(String clusterId) {
@@ -329,6 +332,7 @@ public class HazelcastCloudManager {
         try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
             stream.write(response.body().bytes());
         }
+
         ZipFile zipFile = new ZipFile(pathResponseZip.toString());
         zipFile.extractAll(destination.toString());
         new File(pathResponseZip.toString()).delete();
