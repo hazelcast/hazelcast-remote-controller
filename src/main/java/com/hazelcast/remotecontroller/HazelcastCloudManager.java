@@ -135,7 +135,7 @@ public class HazelcastCloudManager {
             waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
             return getHazelcastCloudCluster(clusterId);
         } catch (Exception e) {
-            throw new CloudException(String.format("Stop cluster with id %s is failed, Rc stack trace is: %s", clusterId, e.getStackTrace()));
+            throw new CloudException(String.format("Stop cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -203,7 +203,7 @@ public class HazelcastCloudManager {
             try {
                 return mapper.readTree(response.body().string()).get("tlsPassword").asText();
             } catch (Exception e) {
-                throw new CloudException("Body is null for tlsPassword");
+                throw new CloudException("Body is null for tlsPassword. " + Arrays.toString(e.getStackTrace()));
             }
         }
         catch(Exception e)
@@ -265,7 +265,7 @@ public class HazelcastCloudManager {
             LOG.info(maskValueOfToken(loginResponse));
             return mapper.readTree(loginResponse).get("data").get("login").get("token").asText();
         } catch (Exception e) {
-            throw new CloudException("Get bearer token is failed");
+            throw new CloudException("Get bearer token is failed. " + e.getMessage());
         }
     }
 
