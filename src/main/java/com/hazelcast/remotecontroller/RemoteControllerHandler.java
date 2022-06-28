@@ -11,6 +11,7 @@ import java.util.Locale;
 public class RemoteControllerHandler implements RemoteController.Iface {
 
     private ClusterManager clusterManager;
+    private HazelcastCloudManager cloudManager;
 
     public RemoteControllerHandler() {
         this.clusterManager = new ClusterManager();
@@ -86,6 +87,56 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     public Cluster mergeMemberToCluster(String clusterId, String memberId) throws TException {
         //TODO
         return null;
+    }
+
+    @Override
+    public void loginToHazelcastCloudUsingEnvironment() throws TException {
+        if(cloudManager == null)
+            cloudManager = new HazelcastCloudManager();
+        cloudManager.loginToHazelcastCloudUsingEnvironment();
+    }
+
+    @Override
+    public void loginToHazelcastCloud(String uri, String apiKey, String apiSecret) throws TException {
+        if(cloudManager == null)
+            cloudManager = new HazelcastCloudManager();
+        cloudManager.loginToHazelcastCloud(uri, apiKey, apiSecret);
+    }
+
+    @Override
+    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) throws TException {
+        return getCloudManager().createHazelcastCloudStandardCluster(hazelcastVersion, isTlsEnabled);
+    }
+
+    @Override
+    public void setClusterMemberCount(String id, int totalMemberCount) throws TException {
+        getCloudManager().setClusterMemberCount(id, totalMemberCount);
+    }
+
+    @Override
+    public CloudCluster getHazelcastCloudCluster(String id) throws TException {
+        return getCloudManager().getHazelcastCloudCluster(id);
+    }
+
+    @Override
+    public CloudCluster stopHazelcastCloudCluster(String id) throws TException {
+        return getCloudManager().stopHazelcastCloudCluster(id);
+    }
+
+    @Override
+    public CloudCluster resumeHazelcastCloudCluster(String id) throws TException {
+        return getCloudManager().resumeHazelcastCloudCluster(id);
+    }
+
+    @Override
+    public void deleteHazelcastCloudCluster(String id) throws TException {
+        getCloudManager().deleteHazelcastCloudCluster(id);
+    }
+
+    private HazelcastCloudManager getCloudManager() throws CloudException {
+        if(cloudManager == null)
+            throw new CloudException("It seems cloud manager is null, did you login?");
+        return cloudManager;
     }
 
     @Override
