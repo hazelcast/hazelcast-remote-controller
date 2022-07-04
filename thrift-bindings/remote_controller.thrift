@@ -99,7 +99,7 @@ service RemoteController {
      * @param cloudClusterId
      * @param totalMemberCount -> Total member count of the cluster
      */
-    void setClusterMemberCount(1:string cloudClusterId, 2:i32 totalMemberCount) throws (1:CloudException cloudException)
+    void setHazelcastCloudClusterMemberCount(1:string cloudClusterId, 2:i32 totalMemberCount) throws (1:CloudException cloudException)
 
     /**
      * Get information of the given cluster
