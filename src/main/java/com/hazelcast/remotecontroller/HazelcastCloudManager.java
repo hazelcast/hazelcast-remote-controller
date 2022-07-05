@@ -85,7 +85,7 @@ public class HazelcastCloudManager {
         }
     }
 
-    public void setClusterMemberCount(String clusterId, int totalMemberCount) throws CloudException {
+    public void setHazelcastCloudClusterMemberCount(String clusterId, int totalMemberCount) throws CloudException {
         String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
         try {
 
