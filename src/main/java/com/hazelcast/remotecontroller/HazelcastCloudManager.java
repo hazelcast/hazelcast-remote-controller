@@ -68,7 +68,7 @@ public class HazelcastCloudManager {
             String query = String.format("{\"query\":\"mutation {createStarterCluster(input: {name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" clusterType: SMALL totalMemory: 2 hazelcastVersion: \\\"%s\\\" isTlsEnabled: %b } ) { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token} } }\"}",
                     clusterName,
                     "aws",
-                    "us-west-2",
+                    readRegionForCloud(),
                     hazelcastVersion,
                     isTlsEnabled);
 
@@ -317,6 +317,8 @@ public class HazelcastCloudManager {
         }
     }
 
+    // Somehow this method can download certificates for UAT environment but for PROD it returns 404. That is why tests are not runable on PROD environment.
+    // TODO: it should be asked to cloud team why they are different, and depending on their response this function can bu updated.
     private void createFolderAndDownloadCertificates(Path pathClusterId, String clusterId) throws IOException {
         Path destination;
         Files.createDirectories(pathClusterId);
@@ -335,6 +337,7 @@ public class HazelcastCloudManager {
 
         call = client.newCall(request);
         Response response = call.execute();
+        LOG.info(maskValueOfToken(response.body().string()));
         FileOutputStream stream = new FileOutputStream(pathResponseZip.toString());
         try {
             stream.write(response.body().bytes());
@@ -345,5 +348,15 @@ public class HazelcastCloudManager {
         ZipFile zipFile = new ZipFile(pathResponseZip.toString());
         zipFile.extractAll(destination.toString());
         new File(pathResponseZip.toString()).delete();
+    }
+
+    // Standard cluster regions can be different on PROD and UAT environment. Depending on which environment you can set an env variable named 'AWS_REGION'.
+    // It can be also improvable, there should be an endpoint to check available regions, in this method, we can get the available regions depending on the BASE_URL and return.
+    private String readRegionForCloud()
+    {
+        String region = System.getenv("AWS_REGION");
+        if(region == null)
+            return "us-west-2";
+        return region;
     }
 }
