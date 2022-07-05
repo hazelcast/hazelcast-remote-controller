@@ -109,8 +109,8 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public void setClusterMemberCount(String id, int totalMemberCount) throws TException {
-        getCloudManager().setClusterMemberCount(id, totalMemberCount);
+    public void setHazelcastCloudClusterMemberCount(String id, int totalMemberCount) throws TException {
+        getCloudManager().setHazelcastCloudClusterMemberCount(id, totalMemberCount);
     }
 
     @Override
