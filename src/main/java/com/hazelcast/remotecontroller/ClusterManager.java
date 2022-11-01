@@ -252,46 +252,50 @@ public class ClusterManager {
         return true;
     }
 
-    public List<Long> getSchemasOnMember(String clusterId, String memberId) throws InvocationTargetException, IllegalAccessException {
-        HzCluster hzCluster = clusterMap.get(clusterId);
-        if (hzCluster == null) {
-            LOG.info("Cluster does not exist: " + clusterId);
-            return null;
-        }
-        HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
-        if (hazelcastInstance == null) {
-            LOG.info("Member does not exist: " + memberId);
-            return null;
-        }
-        // We will use reflection. If it fails, an error will be returned anyway.
-        Node node = HazelcastTestSupport.getNode(hazelcastInstance);
-        Method[] methods = node.getClass().getDeclaredMethods();
-        for (Method method : methods) {
-            if (method.getName().equals("getSchemaService")) {
-                Object schemaService = method.invoke(node);
-                Method[] methodsOfSchemaService = schemaService.getClass().getDeclaredMethods();
-                for (Method methodOfSchemaService : methodsOfSchemaService) {
-                    if (methodOfSchemaService.getName().equals("getAllSchemas")) {
-                        Collection<Object> schemas = (Collection<Object>) methodOfSchemaService.invoke(schemaService);
-                        List<Long> schemaIds = new ArrayList<>();
-                        for (Object schema : schemas) {
-                            Method[] methodsOfSchema = schema.getClass().getDeclaredMethods();
-                            for (Method methodOfSchema : methodsOfSchema) {
-                                if (methodOfSchema.getName().equals("getSchemaId")) {
-                                    long schemaId = (long) methodOfSchema.invoke(schema);
-                                    schemaIds.add(schemaId);
+    public List<Long> getSchemasOnMember(String clusterId, String memberId) {
+        try {
+            HzCluster hzCluster = clusterMap.get(clusterId);
+            if (hzCluster == null) {
+                LOG.info("Cluster does not exist: " + clusterId);
+                return null;
+            }
+            HazelcastInstance hazelcastInstance = hzCluster.getInstanceById(memberId);
+            if (hazelcastInstance == null) {
+                LOG.info("Member does not exist: " + memberId);
+                return null;
+            }
+            // We will use reflection. If it fails, an error will be returned anyway.
+            Node node = HazelcastTestSupport.getNode(hazelcastInstance);
+            Method[] methods = node.getClass().getDeclaredMethods();
+            for (Method method : methods) {
+                if (method.getName().equals("getSchemaService")) {
+                    Object schemaService = method.invoke(node);
+                    Method[] methodsOfSchemaService = schemaService.getClass().getDeclaredMethods();
+                    for (Method methodOfSchemaService : methodsOfSchemaService) {
+                        if (methodOfSchemaService.getName().equals("getAllSchemas")) {
+                            Collection<Object> schemas = (Collection<Object>) methodOfSchemaService.invoke(schemaService);
+                            List<Long> schemaIds = new ArrayList<>();
+                            for (Object schema : schemas) {
+                                Method[] methodsOfSchema = schema.getClass().getDeclaredMethods();
+                                for (Method methodOfSchema : methodsOfSchema) {
+                                    if (methodOfSchema.getName().equals("getSchemaId")) {
+                                        long schemaId = (long) methodOfSchema.invoke(schema);
+                                        schemaIds.add(schemaId);
+                                    }
                                 }
                             }
+                            return schemaIds;
                         }
-                        return schemaIds;
                     }
                 }
             }
+            throw new RuntimeException(
+                    "Remote controller tried to use reflection to get 'Node' of the HazelcastInstance and then tried to call " +
+                            "node.getSchemaService().getAllSchemas() method to retrieve schemas. And then it tried to call getSchemaId() " +
+                            "on each schema and then return the schema id list. This whole operation failed due to any of these not working. "
+                            + "Please ensure the Hazelcast version running has these methods.");
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
-        throw new RuntimeException(
-                "Remote controller tried to use reflection to get 'Node' of the HazelcastInstance and then tried to call " +
-                "node.getSchemaService().getAllSchemas() method to retrieve schemas. And then it tried to call getSchemaId() " +
-                "on each schema and then return the schema id list. This whole operation failed due to any of these not working. "
-                + "Please ensure the Hazelcast version running has these methods.");
     }
 }
