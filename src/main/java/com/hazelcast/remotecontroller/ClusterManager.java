@@ -252,7 +252,7 @@ public class ClusterManager {
         return true;
     }
 
-    public List<Long> checkMemberIncludes(String clusterId, String memberId) throws InvocationTargetException, IllegalAccessException {
+    public List<Long> getSchemasOnMember(String clusterId, String memberId) throws InvocationTargetException, IllegalAccessException {
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
             LOG.info("Cluster does not exist: " + clusterId);
