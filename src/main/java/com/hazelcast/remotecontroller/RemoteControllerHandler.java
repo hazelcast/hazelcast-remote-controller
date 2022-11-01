@@ -6,6 +6,7 @@ import org.apache.thrift.TException;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.util.List;
 import java.util.Locale;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
@@ -87,6 +88,26 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     public Cluster mergeMemberToCluster(String clusterId, String memberId) throws TException {
         //TODO
         return null;
+    }
+
+    @Override
+    public boolean blockCommunicationBetween(String clusterId, String memberId, String otherMemberId) throws TException {
+        return clusterManager.blockCommunicationBetween(clusterId, memberId, otherMemberId);
+    }
+
+    @Override
+    public boolean unblockCommunicationBetween(String clusterId, String memberId, String otherMemberId) throws TException {
+        return clusterManager.unblockCommunicationBetween(clusterId, memberId, otherMemberId);
+    }
+
+    @Override
+    public boolean suspectMember(String clusterId, String memberId, String otherMemberId) throws TException {
+        return clusterManager.suspectMember(clusterId, memberId, otherMemberId);
+    }
+
+    @Override
+    public List<Long> getSchemasOnMember(String clusterId, String memberId) throws TException {
+        return clusterManager.getSchemasOnMember(clusterId, memberId);
     }
 
     @Override

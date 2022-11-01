@@ -66,6 +66,12 @@ service RemoteController {
     Cluster splitMemberFromCluster(1:string memberId)
     Cluster mergeMemberToCluster(1:string clusterId, 2:string memberId)
 
+    bool blockCommunicationBetween(1:string clusterId, 2:string memberId, 3:string otherMemberId);
+    bool unblockCommunicationBetween(1:string clusterId, 2:string memberId, 3:string otherMemberId);
+
+    bool suspectMember(1:string clusterId, 2:string memberId, 3:string otherMemberId);
+    list<i64> getSchemasOnMember(1:string clusterId, 2:string memberId);
+
     /**
      * Reads the environment variables and calls loginToHazelcastCloud() method with these variables.
      * @throws CloudException
