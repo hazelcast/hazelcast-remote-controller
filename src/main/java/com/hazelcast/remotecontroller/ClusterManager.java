@@ -193,6 +193,7 @@ public class ClusterManager {
     }
 
     public boolean blockCommunicationBetween(String clusterId, String memberId, String otherMemberId) {
+        LOG.warn("ClusterId " + clusterId + " MemberId " + memberId + " OtherMemberId " + otherMemberId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
             LOG.info("Cluster does not exist: " + clusterId);
@@ -213,6 +214,7 @@ public class ClusterManager {
     }
 
     public boolean unblockCommunicationBetween(String clusterId, String memberId, String otherMemberId) {
+        LOG.warn("ClusterId " + clusterId + " MemberId " + memberId + " OtherMemberId " + otherMemberId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
             LOG.info("Cluster does not exist: " + clusterId);
@@ -233,6 +235,7 @@ public class ClusterManager {
     }
 
     public boolean suspectMember(String clusterId, String memberId, String otherMemberId) {
+        LOG.warn("ClusterId " + clusterId + " MemberId " + memberId + " OtherMemberId " + otherMemberId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
             LOG.info("Cluster does not exist: " + clusterId);
