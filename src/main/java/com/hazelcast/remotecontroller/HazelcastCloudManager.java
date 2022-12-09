@@ -216,7 +216,7 @@ public class HazelcastCloudManager {
         }
         catch(Exception e)
         {
-            LOG.warn(e.getMessage());
+            LOG.warn(e);
             return null;
         }
     }
@@ -274,7 +274,7 @@ public class HazelcastCloudManager {
             LOG.info(maskValueOfToken(loginResponse));
             return mapper.readTree(loginResponse).get("data").get("login").get("token").asText();
         } catch (Exception e) {
-            throw new CloudException("Get bearer token is failed. " + e.getMessage());
+            throw new CloudException("Get bearer token is failed. " + e);
         }
     }
 
