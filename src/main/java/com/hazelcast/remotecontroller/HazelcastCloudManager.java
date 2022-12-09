@@ -274,7 +274,7 @@ public class HazelcastCloudManager {
             LOG.info(maskValueOfToken(loginResponse));
             return mapper.readTree(loginResponse).get("data").get("login").get("token").asText();
         } catch (Exception e) {
-            throw new CloudException("Get bearer token is failed. " + e);
+            throw new CloudException("Get bearer token is failed. " + Arrays.toString(e.getStackTrace()));
         }
     }
 
