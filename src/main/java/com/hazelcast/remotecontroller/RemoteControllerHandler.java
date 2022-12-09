@@ -49,6 +49,11 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
+    public Member startMemberOnPort(String clusterId, int port, String publicIp) throws TException {
+        return clusterManager.startMemberOnPort(clusterId, port, publicIp);
+    }
+
+    @Override
     public boolean shutdownMember(String clusterId, String memberId) throws TException {
         return clusterManager.shutdownMember(clusterId, memberId);
     }

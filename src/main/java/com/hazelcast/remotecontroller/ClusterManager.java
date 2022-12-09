@@ -14,7 +14,9 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,6 +54,22 @@ public class ClusterManager {
     }
 
     public Member startMember(String clusterId) throws ServerException {
+        HzCluster hzCluster = getHzCluster(clusterId);
+        Config config = hzCluster.getConfig();
+        LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
+        return startMemberInternal(config, hzCluster);
+    }
+
+    public Member startMemberOnPort(String clusterId, int port, String publicIp) throws ServerException {
+        HzCluster hzCluster = getHzCluster(clusterId);
+        Config config = hzCluster.getConfig();
+        config.getNetworkConfig().setPort(port);
+        config.getNetworkConfig().setPublicAddress(publicIp + port % 256);
+        LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
+        return startMemberInternal(config, hzCluster);
+    }
+
+    private HzCluster getHzCluster(String clusterId) throws ServerException {
         LOG.info("Starting a Member on cluster : " + clusterId);
         HzCluster hzCluster = clusterMap.get(clusterId);
         if (hzCluster == null) {
@@ -59,10 +77,10 @@ public class ClusterManager {
             LOG.info(log);
             throw new ServerException(log);
         }
-        Config config = hzCluster.getConfig();
+        return hzCluster;
+    }
 
-        LOG.info(config.getNetworkConfig().getJoin().getTcpIpConfig());
-
+    private Member startMemberInternal(Config config, HzCluster hzCluster) {
         HazelcastInstance hzInstance = HazelcastInstanceFactory.newHazelcastInstance(config, createInstanceName(config), new FirewallingNodeContext());
         com.hazelcast.cluster.Member member = hzInstance.getCluster().getLocalMember();
         hzCluster.addInstance(member.getUuid().toString(), hzInstance);
