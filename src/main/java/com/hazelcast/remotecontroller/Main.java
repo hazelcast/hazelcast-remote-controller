@@ -104,7 +104,7 @@ public class Main {
             try {
                 this.handler.clean();
             } catch (TException e) {
-                LOG.error(e);
+                LOG.error(e.getMessage());
             }
             LOG.info("TServerEventHandler.deleteContext client");
         }

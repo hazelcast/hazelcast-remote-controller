@@ -31,7 +31,7 @@ public class ClusterManager {
             return new Cluster(hzCluster.getId());
         } catch (Exception e) {
             LOG.warn(e);
-            throw new ServerException(e.toString());
+            throw new ServerException(e.getMessage());
         }
     }
 
