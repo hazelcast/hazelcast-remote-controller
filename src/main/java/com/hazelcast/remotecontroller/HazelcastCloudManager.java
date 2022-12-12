@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 public class HazelcastCloudManager {
     private static final OkHttpClient client = new OkHttpClient();
     private String baseUrl;
-    private URI uri;
     private final ObjectMapper mapper = new ObjectMapper();
     private String bearerToken;
     private static final Logger LOG = LogManager.getLogger(Main.class);
@@ -48,48 +47,58 @@ public class HazelcastCloudManager {
             nullEnvVariables = nullEnvVariables.concat(" API_SECRET ");
 
         if(nullEnvVariables == "")
-            loginToHazelcastCloud(baseUrl, apiKey, apiSecret);
+            loginToCloud(baseUrl, apiKey, apiSecret);
         else
             throw new CloudException("Not all required environment variables are set. These are not set ones: " + nullEnvVariables);
     }
 
-    public void loginToHazelcastCloud(String url, String apiKey, String apiSecret) throws CloudException {
-        uri = URI.create(url + "/api/v1");
+    public void loginToCloud(String url, String apiKey, String apiSecret) throws CloudException {
         baseUrl = url;
         bearerToken = getBearerToken(apiKey, apiSecret);
         if(bearerToken == null)
             throw new CloudException("Login failed");
     }
 
-    public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
+    public CloudCluster createCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
         String clusterId = "";
         try {
             String clusterName = "test-cluster-" + UUID.randomUUID();
-            String query = String.format("{\"query\":\"mutation {createStarterCluster(input: {name: \\\"%s\\\" cloudProvider: \\\"%s\\\" region: \\\"%s\\\" clusterType: SMALL totalMemory: 2 hazelcastVersion: \\\"%s\\\" isTlsEnabled: %b } ) { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token} } }\"}",
+            String jsonString = String.format("{" +
+                            "  \"name\": \"%s\"," +
+                            "  \"clusterTypeId\": 5," + // Serverless cluster
+                            "  \"cloudProviders\": [1]," + // aws
+                            "  \"regions\": [4]," + // us-west-2
+                            "  \"plan\": \"SERVERLESS\"," +
+                            "  \"hazelcastVersion\": \"%s\"," +
+                            "  \"tlsEnabled\": %b" +
+                            "}",
                     clusterName,
-                    "aws",
-                    "us-west-2",
                     hazelcastVersion,
                     isTlsEnabled);
 
-            LOG.info(String.format("Request query: %s", query));
-            String responseBody = prepareAndSendRequest(query).body().string();
-            LOG.info(maskValueOfToken(responseBody));
-            JsonNode rootNode = mapper.readTree(responseBody).get("data").get("createStarterCluster");
-            clusterId = rootNode.get("id").asText();
-            waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-            return getHazelcastCloudCluster(clusterId);
+            LOG.info(String.format("Request query: %s", jsonString));
+            try (Response response = sendPostRequest("/cluster", jsonString)){
+                ResponseBody responseBody = response.body();
+                if (responseBody == null) {
+                    throw new CloudException(String.format("Response body is null while creating a dev mode cluster: %s", response));
+                }
+                String responseString = responseBody.string();
+                LOG.info(maskValueOfToken(responseString));
+                clusterId = mapper.readTree(responseString).get("id").asText();
+                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                return getCluster(clusterId);
+            }
         } catch (Exception e) {
             // Cluster id could be also empty if a problem occurred before cluster id exist
             throw new CloudException(String.format("Create cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
-    public void setHazelcastCloudClusterMemberCount(String clusterId, int totalMemberCount) throws CloudException {
+    public void setClusterMemberCount(String clusterId, int totalMemberCount) throws CloudException {
         String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
         try {
 
-            String requestBody = String.format("{\"id\": %s, \"memory\": %d, \"autoScalingEnabled\": false}", clusterId, totalMemberCount);
+            String requestBody = String.format("{\"memory\": %d, \"autoScalingEnabled\": false}", clusterId, totalMemberCount);
             RequestBody body = RequestBody.create(JSON, requestBody);
             Request request = new Request.Builder()
                     .url(requestUrl)
@@ -107,22 +116,32 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster getHazelcastCloudCluster(String clusterId) throws CloudException {
+    public CloudCluster getCluster(String clusterId) throws CloudException {
         try {
-            String query = String.format("{\"query\": \"query { cluster(clusterId: \\\"%s\\\") { id name hazelcastVersion isTlsEnabled state discoveryTokens {source,token}}}\"}", clusterId);
-            String responseBody = prepareAndSendRequest(query).body().string();
-            LOG.info(maskValueOfToken(responseBody));
-            JsonNode rootNode = mapper.readTree(responseBody).get("data").get("cluster");
-            if(rootNode.asText().equalsIgnoreCase("null"))
-                return null;
+            try (Response res = sendPostRequest("/cluster", null)) {
+                ResponseBody responseBody = res.body();
+                if (responseBody == null) {
+                    throw new CloudException(String.format("Response body is null while getting a cluster: %s", res));
+                }
+                if(!res.isSuccessful()) {
+                    return null;
+                }
+                String responseString = responseBody.string();
+                LOG.info(maskValueOfToken(responseString));
+                JsonNode rootNode = mapper.readTree(responseString);
+                if(rootNode.asText().equalsIgnoreCase("null"))
+                    return null;
 
-            CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), getConnectionName(rootNode.get("id").asText()), rootNode.get("hazelcastVersion").asText(), rootNode.get("isTlsEnabled").asBoolean(), rootNode.get("state").asText(), rootNode.get("discoveryTokens").elements().next().get("token").asText(), null, null);
-            if(rootNode.get("isTlsEnabled").asBoolean())
-            {
-                cluster.setCertificatePath(downloadCertificatesAndGetPath(cluster.getId()));
-                cluster.setTlsPassword(getTlsPassword(cluster.getId()));
+                boolean tlsEnabled = rootNode.get("tlsEnabled").asBoolean();
+                CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), getConnectionName(rootNode.get("id").asText()), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
+                if(tlsEnabled)
+                {
+                    cluster.setCertificatePath(downloadCertificatesAndGetPath(cluster.getId()));
+                    cluster.setTlsPassword(getTlsPassword(cluster.getId()));
+                }
+                return cluster;
             }
-            return cluster;
+
         } catch (Exception e) {
             throw new CloudException(String.format("Get cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
@@ -130,11 +149,16 @@ public class HazelcastCloudManager {
 
     public CloudCluster stopHazelcastCloudCluster(String clusterId) throws CloudException {
         try {
-            String query = String.format("{\"query\": \"mutation { stopCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
-            String responseBody = prepareAndSendRequest(query).body().string();
-            LOG.info(maskValueOfToken(responseBody));
-            waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-            return getHazelcastCloudCluster(clusterId);
+            try (Response res = sendPostRequest(String.format("/cluster/%s/stop", clusterId), null)) {
+                ResponseBody responseBody = res.body();
+                if (responseBody == null) {
+                    throw new CloudException(String.format("Response body is null while stopping a cluster: %s", res));
+                }
+                String responseString = responseBody.string();
+                LOG.info(maskValueOfToken(responseString));
+                waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                return getCluster(clusterId);
+            }
         } catch (Exception e) {
             throw new CloudException(String.format("Stop cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
@@ -142,55 +166,77 @@ public class HazelcastCloudManager {
 
     public CloudCluster resumeHazelcastCloudCluster(String clusterId) throws CloudException {
         try {
-            String query = String.format("{\"query\": \"mutation { resumeCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
-            String responseBody = prepareAndSendRequest(query).body().string();
-            LOG.info(maskValueOfToken(responseBody));
-            waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-            return getHazelcastCloudCluster(clusterId);
+            try (Response res = sendPostRequest(String.format("/cluster/%s/resume", clusterId), null)) {
+                ResponseBody responseBody = res.body();
+                if (responseBody == null) {
+                    throw new CloudException(String.format("Response body is null while resuming a cluster: %s", res));
+                }
+                String responseString = responseBody.string();
+                LOG.info(maskValueOfToken(responseString));
+                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                return getCluster(clusterId);
+            }
         } catch (Exception e) {
             throw new CloudException(String.format("Resume cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
-    public void deleteHazelcastCloudCluster(String clusterId) throws CloudException {
+    public void deleteCluster(String clusterId) throws CloudException {
         try {
-            String query = String.format("{\"query\": \"mutation { deleteCluster(clusterId:\\\"%s\\\") { clusterId }}\"}", clusterId);
-            String responseBody = prepareAndSendRequest(query).body().string();
-            LOG.info(responseBody);
-            waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-            LOG.info(String.format("Cluster with id %s is deleted", clusterId));
+            try (Response res = sendDeleteRequest(String.format("/cluster/%s", clusterId))) {
+                ResponseBody responseBody = res.body();
+                if (responseBody == null) {
+                    throw new CloudException(String.format("Response body is null while deleting a cluster: %s", res));
+                }
+                String responseString = responseBody.string();
+                LOG.info(responseString);
+                waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                LOG.info(String.format("Cluster with id %s is deleted", clusterId));
+            }
         } catch (Exception e) {
             throw new CloudException(String.format("Delete hazelcast cloud cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
-    private Response prepareAndSendRequest(String query) throws InterruptedException, CloudException {
-        int retryCountForExceptionOfEndpoint = 0;
-        Exception temp = null;
-        // Rarely server returns empty header, that is why a retry mechanism is added.
-        while(retryCountForExceptionOfEndpoint < 3)
-        {
-            try {
-                RequestBody body = RequestBody.create(JSON, query);
-                Request request = new Request.Builder()
-                        .url(HttpUrl.get(uri))
-                        .post(body)
-                        .header("Authorization", String.format("Bearer %s", bearerToken))
-                        .header("Content-Type", "application/json")
-                        .build();
-
-                call = client.newCall(request);
-                return call.execute();
+    private Response sendPostRequest(String endpoint, String jsonString) throws CloudException {
+        URI uri = URI.create(baseUrl + endpoint);
+        try {
+            Request.Builder reqBuilder = new Request.Builder()
+                    .url(HttpUrl.get(uri))
+                    .header("Authorization", String.format("Bearer %s", bearerToken))
+                    .header("Content-Type", "application/json");
+            if(jsonString != null) {
+                RequestBody body = RequestBody.create(JSON, jsonString);
+                reqBuilder.post(body);
             }
-            catch(Exception e)
-            {
-                temp = e;
-                Log.warn(e.toString());
-            }
-            retryCountForExceptionOfEndpoint++;
-            TimeUnit.SECONDS.sleep(2);
+            Request request = reqBuilder.build();
+            call = client.newCall(request);
+            return call.execute();
         }
-        throw new CloudException(String.format("Request cannot send successfully after 3 tries, last exception stack trace is: %s", Arrays.toString(temp.getStackTrace())));
+        catch(Exception e) {
+            Log.warn(e.toString());
+            throw new CloudException(String.format("Exception while sending a post request to %s with body %s: \n %s",
+                    uri, jsonString, e));
+        }
+    }
+
+    private Response sendDeleteRequest(String endpoint) throws CloudException {
+        URI uri = URI.create(baseUrl + endpoint);
+        try {
+            Request request = new Request.Builder()
+                    .url(HttpUrl.get(uri))
+                    .delete()
+                    .header("Authorization", String.format("Bearer %s", bearerToken))
+                    .header("Content-Type", "application/json")
+                    .build();
+
+            call = client.newCall(request);
+            return call.execute();
+        }
+        catch(Exception e) {
+            Log.warn(e.toString());
+            throw new CloudException(String.format("Exception while sending a delete request to %s: \n %s", uri, e));
+        }
     }
 
     // Get tlsPassword method uses Rest API instead of GraphQL API.
@@ -222,27 +268,33 @@ public class HazelcastCloudManager {
     }
 
     private void waitForStateOfCluster(String clusterId, String expectedState, long timeoutInMillisecond) throws CloudException {
-        String currentState = "";
+        String currentState;
         long startTime = System.currentTimeMillis();
         try {
             while (true) {
-                String query = String.format("{ \"query\": \"query { cluster(clusterId: \\\"%s\\\") { id state } }\" }", clusterId);
-                String responseBody = prepareAndSendRequest(query).body().string();
-                LOG.info(responseBody);
-                currentState = mapper.readTree(responseBody).get("data").get("cluster").get("state").asText();
-                if(currentState.equalsIgnoreCase(expectedState))
-                    return;
-                if(currentState.equalsIgnoreCase("FAILED"))
-                {
-                    throw new CloudException("Cluster is failed");
+                String query = String.format("{ \"id\": \"%s\" }", clusterId);
+                try (Response response = sendPostRequest("/cluster", query)){
+                    ResponseBody responseBody = response.body();
+                    if (responseBody == null) {
+                        throw new CloudException(String.format("Response body is null while waiting for state of a cluster: %s", response));
+                    }
+                    String responseString = responseBody.string();
+                    LOG.info(responseString);
+                    currentState = mapper.readTree(responseString).get("content").get(0).get("state").asText();
+                    if(currentState.equalsIgnoreCase(expectedState))
+                        return;
+                    if(currentState.equalsIgnoreCase("FAILED"))
+                    {
+                        throw new CloudException(String.format("Cluster state is failed, state response: %s", responseString));
+                    }
+                    if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
+                        break;
+                    TimeUnit.SECONDS.sleep(retryTimeInSecond);
                 }
-                if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
-                    break;
-                TimeUnit.SECONDS.sleep(retryTimeInSecond);
             }
-            throw new CloudException(String.format("The cluster with id %s could not come to the given state in %d millisecond", clusterId, timeoutInMillisecond));
+            throw new CloudException(String.format("The cluster with id %s did not end up in the %s state in %d milliseconds", clusterId, expectedState, timeoutInMillisecond));
         } catch (Exception e) {
-            throw new CloudException(String.format("Wait for state of cluster with id %s failed. Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
+            throw new CloudException(String.format("An error occurred while waiting for the %s state of the cluster with id %s. Error stack trace: %s", expectedState, clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -250,7 +302,7 @@ public class HazelcastCloudManager {
     private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws CloudException, InterruptedException {
         long startTime = System.currentTimeMillis();
         while (true) {
-            if(getHazelcastCloudCluster(clusterId) == null)
+            if(getCluster(clusterId) == null)
                 return;
             if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
                 break;
@@ -261,10 +313,10 @@ public class HazelcastCloudManager {
 
     private String getBearerToken(String apiKey, String apiSecret) throws CloudException {
         try {
-            String query = String.format("{ \"query\": \"mutation { login(apiKey: \\\"%s\\\", apiSecret: \\\"%s\\\") {token} }\" }", apiKey, apiSecret);
+            String query = String.format("{ \"apiKey\": \"%s\", apiSecret: \"%s\" }", apiKey, apiSecret);
             RequestBody body = RequestBody.create(JSON, query);
             Request request = new Request.Builder()
-                    .url(HttpUrl.get(uri))
+                    .url(baseUrl)
                     .post(body)
                     .header("Content-Type", "application/json")
                     .build();
@@ -272,7 +324,7 @@ public class HazelcastCloudManager {
             Response response = call.execute();
             String loginResponse = response.body().string();
             LOG.info(maskValueOfToken(loginResponse));
-            return mapper.readTree(loginResponse).get("data").get("login").get("token").asText();
+            return mapper.readTree(loginResponse).get("token").asText();
         } catch (Exception e) {
             throw new CloudException("Get bearer token is failed. " + Arrays.toString(e.getStackTrace()));
         }
@@ -290,10 +342,10 @@ public class HazelcastCloudManager {
         }
     }
 
-    // It replaces the  value of token with *** in a response body. Such as bearer token, discovery token.
+    // It replaces the value of token with *** in a response body. Such as bearer token, discovery token.
     private String maskValueOfToken(String json)
     {
-        return json.replaceAll("\"token\":\"(.*?)\"", "\"token\":\"******\"");
+        return json.replaceAll("\"token\"\\s*:\\s*\"(.*)\"", "\"token\":\"******\"");
     }
 
     // It creates a folder with name clusterId under /home/user/

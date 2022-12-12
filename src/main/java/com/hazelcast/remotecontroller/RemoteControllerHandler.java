@@ -100,22 +100,22 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     public void loginToHazelcastCloud(String uri, String apiKey, String apiSecret) throws TException {
         if(cloudManager == null)
             cloudManager = new HazelcastCloudManager();
-        cloudManager.loginToHazelcastCloud(uri, apiKey, apiSecret);
+        cloudManager.loginToCloud(uri, apiKey, apiSecret);
     }
 
     @Override
     public CloudCluster createHazelcastCloudStandardCluster(String hazelcastVersion, boolean isTlsEnabled) throws TException {
-        return getCloudManager().createHazelcastCloudStandardCluster(hazelcastVersion, isTlsEnabled);
+        return getCloudManager().createCluster(hazelcastVersion, isTlsEnabled);
     }
 
     @Override
     public void setHazelcastCloudClusterMemberCount(String id, int totalMemberCount) throws TException {
-        getCloudManager().setHazelcastCloudClusterMemberCount(id, totalMemberCount);
+        getCloudManager().setClusterMemberCount(id, totalMemberCount);
     }
 
     @Override
     public CloudCluster getHazelcastCloudCluster(String id) throws TException {
-        return getCloudManager().getHazelcastCloudCluster(id);
+        return getCloudManager().getCluster(id);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     @Override
     public void deleteHazelcastCloudCluster(String id) throws TException {
-        getCloudManager().deleteHazelcastCloudCluster(id);
+        getCloudManager().deleteCluster(id);
     }
 
     private HazelcastCloudManager getCloudManager() throws CloudException {
