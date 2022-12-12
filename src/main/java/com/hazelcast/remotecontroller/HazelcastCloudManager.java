@@ -117,6 +117,10 @@ public class HazelcastCloudManager {
     }
 
     public CloudCluster getCluster(String clusterId) throws CloudException {
+        return getCluster(clusterId, true);
+    }
+
+    public CloudCluster getCluster(String clusterId, boolean setupTls) throws CloudException {
         try {
             try (Response res = sendPostRequest("/cluster", null)) {
                 ResponseBody responseBody = res.body();
@@ -134,7 +138,7 @@ public class HazelcastCloudManager {
 
                 boolean tlsEnabled = rootNode.get("tlsEnabled").asBoolean();
                 CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), getConnectionName(rootNode.get("id").asText()), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
-                if(tlsEnabled)
+                if(tlsEnabled && setupTls)
                 {
                     cluster.setCertificatePath(downloadCertificatesAndGetPath(cluster.getId()));
                     cluster.setTlsPassword(getTlsPassword(cluster.getId()));
@@ -240,11 +244,11 @@ public class HazelcastCloudManager {
     }
 
     // Get tlsPassword method uses Rest API instead of GraphQL API.
-    // In getHazelcastCloudCluster() method, first getting the cluster with GraphQL api and then if tls is enabled, certificate download and tls password requests are sent via Rest API.
-    // During delete cluster process, in a corner case, getHazelcastCloudCluster() method works and cluster returns, but until getTlsPassword() method call, cluster is deleted.
-    // That is why getTlsPassword() methods doesn't throw exception, it returns null. It shouldn't throw exception in this corner case
+    // In getCluster() method, we first get the cluster and then if tls is enabled, certificate download and tls password requests are sent.
+    // During delete cluster process, the following is possible getCluster() returns the cluster, but until getTlsPassword() method is called,
+    // the cluster is deleted. That is why getTlsPassword() methods doesn't throw exception, it returns null. It shouldn't throw exception in this corner case
     // There cloud be improvement for this logic.
-    private String getTlsPassword(String clusterId) {
+    private String getTlsPassword(String clusterId) throws CloudException {
         String requestUrl = String.format("%s/cluster/%s", baseUrl, clusterId);
         try {
             Request request = new Request.Builder()
@@ -260,10 +264,9 @@ public class HazelcastCloudManager {
                 throw new CloudException("Body is null for tlsPassword. " + Arrays.toString(e.getStackTrace()));
             }
         }
-        catch(Exception e)
-        {
+        catch(Exception e) {
             LOG.warn(e);
-            return null;
+            throw new CloudException(String.format("Get tls password with cluster id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -302,7 +305,8 @@ public class HazelcastCloudManager {
     private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws CloudException, InterruptedException {
         long startTime = System.currentTimeMillis();
         while (true) {
-            if(getCluster(clusterId) == null)
+            // Don't setup tls, we just want to check if cluster is deleted
+            if(getCluster(clusterId, false) == null)
                 return;
             if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
                 break;
