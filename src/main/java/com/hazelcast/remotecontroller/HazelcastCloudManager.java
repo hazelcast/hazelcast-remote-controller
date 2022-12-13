@@ -137,7 +137,7 @@ public class HazelcastCloudManager {
                 if(rootNode.asText().equalsIgnoreCase("null"))
                     return null;
                 boolean tlsEnabled = rootNode.get("tlsEnabled").asBoolean();
-                CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
+                CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), rootNode.get("releaseName").asText(), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
                 if(tlsEnabled && setupTls)
                 {
                     cluster.setCertificatePath(downloadCertificatesAndGetPath(cluster.getId()));

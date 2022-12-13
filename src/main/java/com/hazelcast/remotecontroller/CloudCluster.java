@@ -13,18 +13,20 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField HAZELCAST_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("hazelcastVersion", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField IS_TLS_ENABLED_FIELD_DESC = new org.apache.thrift.protocol.TField("isTlsEnabled", org.apache.thrift.protocol.TType.BOOL, (short)4);
-  private static final org.apache.thrift.protocol.TField STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("state", org.apache.thrift.protocol.TType.STRING, (short)5);
-  private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRING, (short)6);
-  private static final org.apache.thrift.protocol.TField CERTIFICATE_PATH_FIELD_DESC = new org.apache.thrift.protocol.TField("certificatePath", org.apache.thrift.protocol.TType.STRING, (short)7);
-  private static final org.apache.thrift.protocol.TField TLS_PASSWORD_FIELD_DESC = new org.apache.thrift.protocol.TField("tlsPassword", org.apache.thrift.protocol.TType.STRING, (short)8);
+  private static final org.apache.thrift.protocol.TField RELEASE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("releaseName", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField HAZELCAST_VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("hazelcastVersion", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField IS_TLS_ENABLED_FIELD_DESC = new org.apache.thrift.protocol.TField("isTlsEnabled", org.apache.thrift.protocol.TType.BOOL, (short)5);
+  private static final org.apache.thrift.protocol.TField STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("state", org.apache.thrift.protocol.TType.STRING, (short)6);
+  private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRING, (short)7);
+  private static final org.apache.thrift.protocol.TField CERTIFICATE_PATH_FIELD_DESC = new org.apache.thrift.protocol.TField("certificatePath", org.apache.thrift.protocol.TType.STRING, (short)8);
+  private static final org.apache.thrift.protocol.TField TLS_PASSWORD_FIELD_DESC = new org.apache.thrift.protocol.TField("tlsPassword", org.apache.thrift.protocol.TType.STRING, (short)9);
 
   private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new CloudClusterStandardSchemeFactory();
   private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new CloudClusterTupleSchemeFactory();
 
   public @org.apache.thrift.annotation.Nullable java.lang.String id; // required
   public @org.apache.thrift.annotation.Nullable java.lang.String name; // required
+  public @org.apache.thrift.annotation.Nullable java.lang.String releaseName; // required
   public @org.apache.thrift.annotation.Nullable java.lang.String hazelcastVersion; // required
   public boolean isTlsEnabled; // required
   public @org.apache.thrift.annotation.Nullable java.lang.String state; // required
@@ -36,12 +38,13 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
-    HAZELCAST_VERSION((short)3, "hazelcastVersion"),
-    IS_TLS_ENABLED((short)4, "isTlsEnabled"),
-    STATE((short)5, "state"),
-    TOKEN((short)6, "token"),
-    CERTIFICATE_PATH((short)7, "certificatePath"),
-    TLS_PASSWORD((short)8, "tlsPassword");
+    RELEASE_NAME((short)3, "releaseName"),
+    HAZELCAST_VERSION((short)4, "hazelcastVersion"),
+    IS_TLS_ENABLED((short)5, "isTlsEnabled"),
+    STATE((short)6, "state"),
+    TOKEN((short)7, "token"),
+    CERTIFICATE_PATH((short)8, "certificatePath"),
+    TLS_PASSWORD((short)9, "tlsPassword");
 
     private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
@@ -61,17 +64,19 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
           return ID;
         case 2: // NAME
           return NAME;
-        case 3: // HAZELCAST_VERSION
+        case 3: // RELEASE_NAME
+          return RELEASE_NAME;
+        case 4: // HAZELCAST_VERSION
           return HAZELCAST_VERSION;
-        case 4: // IS_TLS_ENABLED
+        case 5: // IS_TLS_ENABLED
           return IS_TLS_ENABLED;
-        case 5: // STATE
+        case 6: // STATE
           return STATE;
-        case 6: // TOKEN
+        case 7: // TOKEN
           return TOKEN;
-        case 7: // CERTIFICATE_PATH
+        case 8: // CERTIFICATE_PATH
           return CERTIFICATE_PATH;
-        case 8: // TLS_PASSWORD
+        case 9: // TLS_PASSWORD
           return TLS_PASSWORD;
         default:
           return null;
@@ -123,6 +128,8 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.RELEASE_NAME, new org.apache.thrift.meta_data.FieldMetaData("releaseName", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.HAZELCAST_VERSION, new org.apache.thrift.meta_data.FieldMetaData("hazelcastVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.IS_TLS_ENABLED, new org.apache.thrift.meta_data.FieldMetaData("isTlsEnabled", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -145,6 +152,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
   public CloudCluster(
     java.lang.String id,
     java.lang.String name,
+    java.lang.String releaseName,
     java.lang.String hazelcastVersion,
     boolean isTlsEnabled,
     java.lang.String state,
@@ -155,6 +163,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
     this();
     this.id = id;
     this.name = name;
+    this.releaseName = releaseName;
     this.hazelcastVersion = hazelcastVersion;
     this.isTlsEnabled = isTlsEnabled;
     setIsTlsEnabledIsSet(true);
@@ -174,6 +183,9 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
     }
     if (other.isSetName()) {
       this.name = other.name;
+    }
+    if (other.isSetReleaseName()) {
+      this.releaseName = other.releaseName;
     }
     if (other.isSetHazelcastVersion()) {
       this.hazelcastVersion = other.hazelcastVersion;
@@ -201,6 +213,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
   public void clear() {
     this.id = null;
     this.name = null;
+    this.releaseName = null;
     this.hazelcastVersion = null;
     setIsTlsEnabledIsSet(false);
     this.isTlsEnabled = false;
@@ -257,6 +270,31 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
   public void setNameIsSet(boolean value) {
     if (!value) {
       this.name = null;
+    }
+  }
+
+  @org.apache.thrift.annotation.Nullable
+  public java.lang.String getReleaseName() {
+    return this.releaseName;
+  }
+
+  public CloudCluster setReleaseName(@org.apache.thrift.annotation.Nullable java.lang.String releaseName) {
+    this.releaseName = releaseName;
+    return this;
+  }
+
+  public void unsetReleaseName() {
+    this.releaseName = null;
+  }
+
+  /** Returns true if field releaseName is set (has been assigned a value) and false otherwise */
+  public boolean isSetReleaseName() {
+    return this.releaseName != null;
+  }
+
+  public void setReleaseNameIsSet(boolean value) {
+    if (!value) {
+      this.releaseName = null;
     }
   }
 
@@ -426,6 +464,14 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
       }
       break;
 
+    case RELEASE_NAME:
+      if (value == null) {
+        unsetReleaseName();
+      } else {
+        setReleaseName((java.lang.String)value);
+      }
+      break;
+
     case HAZELCAST_VERSION:
       if (value == null) {
         unsetHazelcastVersion();
@@ -486,6 +532,9 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
     case NAME:
       return getName();
 
+    case RELEASE_NAME:
+      return getReleaseName();
+
     case HAZELCAST_VERSION:
       return getHazelcastVersion();
 
@@ -519,6 +568,8 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
       return isSetId();
     case NAME:
       return isSetName();
+    case RELEASE_NAME:
+      return isSetReleaseName();
     case HAZELCAST_VERSION:
       return isSetHazelcastVersion();
     case IS_TLS_ENABLED:
@@ -565,6 +616,15 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
       if (!(this_present_name && that_present_name))
         return false;
       if (!this.name.equals(that.name))
+        return false;
+    }
+
+    boolean this_present_releaseName = true && this.isSetReleaseName();
+    boolean that_present_releaseName = true && that.isSetReleaseName();
+    if (this_present_releaseName || that_present_releaseName) {
+      if (!(this_present_releaseName && that_present_releaseName))
+        return false;
+      if (!this.releaseName.equals(that.releaseName))
         return false;
     }
 
@@ -637,6 +697,10 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
     if (isSetName())
       hashCode = hashCode * 8191 + name.hashCode();
 
+    hashCode = hashCode * 8191 + ((isSetReleaseName()) ? 131071 : 524287);
+    if (isSetReleaseName())
+      hashCode = hashCode * 8191 + releaseName.hashCode();
+
     hashCode = hashCode * 8191 + ((isSetHazelcastVersion()) ? 131071 : 524287);
     if (isSetHazelcastVersion())
       hashCode = hashCode * 8191 + hazelcastVersion.hashCode();
@@ -686,6 +750,16 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
     }
     if (isSetName()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, other.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = java.lang.Boolean.valueOf(isSetReleaseName()).compareTo(other.isSetReleaseName());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetReleaseName()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.releaseName, other.releaseName);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -784,6 +858,14 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
       sb.append("null");
     } else {
       sb.append(this.name);
+    }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("releaseName:");
+    if (this.releaseName == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.releaseName);
     }
     first = false;
     if (!first) sb.append(", ");
@@ -891,7 +973,15 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // HAZELCAST_VERSION
+          case 3: // RELEASE_NAME
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.releaseName = iprot.readString();
+              struct.setReleaseNameIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // HAZELCAST_VERSION
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.hazelcastVersion = iprot.readString();
               struct.setHazelcastVersionIsSet(true);
@@ -899,7 +989,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // IS_TLS_ENABLED
+          case 5: // IS_TLS_ENABLED
             if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
               struct.isTlsEnabled = iprot.readBool();
               struct.setIsTlsEnabledIsSet(true);
@@ -907,7 +997,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 5: // STATE
+          case 6: // STATE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.state = iprot.readString();
               struct.setStateIsSet(true);
@@ -915,7 +1005,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 6: // TOKEN
+          case 7: // TOKEN
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.token = iprot.readString();
               struct.setTokenIsSet(true);
@@ -923,7 +1013,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 7: // CERTIFICATE_PATH
+          case 8: // CERTIFICATE_PATH
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.certificatePath = iprot.readString();
               struct.setCertificatePathIsSet(true);
@@ -931,7 +1021,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 8: // TLS_PASSWORD
+          case 9: // TLS_PASSWORD
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.tlsPassword = iprot.readString();
               struct.setTlsPasswordIsSet(true);
@@ -962,6 +1052,11 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
       if (struct.name != null) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(struct.name);
+        oprot.writeFieldEnd();
+      }
+      if (struct.releaseName != null) {
+        oprot.writeFieldBegin(RELEASE_NAME_FIELD_DESC);
+        oprot.writeString(struct.releaseName);
         oprot.writeFieldEnd();
       }
       if (struct.hazelcastVersion != null) {
@@ -1016,30 +1111,36 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
       if (struct.isSetName()) {
         optionals.set(1);
       }
-      if (struct.isSetHazelcastVersion()) {
+      if (struct.isSetReleaseName()) {
         optionals.set(2);
       }
-      if (struct.isSetIsTlsEnabled()) {
+      if (struct.isSetHazelcastVersion()) {
         optionals.set(3);
       }
-      if (struct.isSetState()) {
+      if (struct.isSetIsTlsEnabled()) {
         optionals.set(4);
       }
-      if (struct.isSetToken()) {
+      if (struct.isSetState()) {
         optionals.set(5);
       }
-      if (struct.isSetCertificatePath()) {
+      if (struct.isSetToken()) {
         optionals.set(6);
       }
-      if (struct.isSetTlsPassword()) {
+      if (struct.isSetCertificatePath()) {
         optionals.set(7);
       }
-      oprot.writeBitSet(optionals, 8);
+      if (struct.isSetTlsPassword()) {
+        optionals.set(8);
+      }
+      oprot.writeBitSet(optionals, 9);
       if (struct.isSetId()) {
         oprot.writeString(struct.id);
       }
       if (struct.isSetName()) {
         oprot.writeString(struct.name);
+      }
+      if (struct.isSetReleaseName()) {
+        oprot.writeString(struct.releaseName);
       }
       if (struct.isSetHazelcastVersion()) {
         oprot.writeString(struct.hazelcastVersion);
@@ -1064,7 +1165,7 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, CloudCluster struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
-      java.util.BitSet incoming = iprot.readBitSet(8);
+      java.util.BitSet incoming = iprot.readBitSet(9);
       if (incoming.get(0)) {
         struct.id = iprot.readString();
         struct.setIdIsSet(true);
@@ -1074,26 +1175,30 @@ public class CloudCluster implements org.apache.thrift.TBase<CloudCluster, Cloud
         struct.setNameIsSet(true);
       }
       if (incoming.get(2)) {
+        struct.releaseName = iprot.readString();
+        struct.setReleaseNameIsSet(true);
+      }
+      if (incoming.get(3)) {
         struct.hazelcastVersion = iprot.readString();
         struct.setHazelcastVersionIsSet(true);
       }
-      if (incoming.get(3)) {
+      if (incoming.get(4)) {
         struct.isTlsEnabled = iprot.readBool();
         struct.setIsTlsEnabledIsSet(true);
       }
-      if (incoming.get(4)) {
+      if (incoming.get(5)) {
         struct.state = iprot.readString();
         struct.setStateIsSet(true);
       }
-      if (incoming.get(5)) {
+      if (incoming.get(6)) {
         struct.token = iprot.readString();
         struct.setTokenIsSet(true);
       }
-      if (incoming.get(6)) {
+      if (incoming.get(7)) {
         struct.certificatePath = iprot.readString();
         struct.setCertificatePathIsSet(true);
       }
-      if (incoming.get(7)) {
+      if (incoming.get(8)) {
         struct.tlsPassword = iprot.readString();
         struct.setTlsPasswordIsSet(true);
       }
