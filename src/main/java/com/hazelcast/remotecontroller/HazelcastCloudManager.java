@@ -26,13 +26,17 @@ public class HazelcastCloudManager {
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private Call call;
-    private final int timeoutForClusterStateWait = 5;
-    private final int retryTimeInSecond = 10;
+    private static final int timeoutForClusterStateWait = 5;
+    private static final int retryTimeInSecond = 10;
+    private static final int clusterTypeId = 5; // Serverless cluster
+    private static final int cloudProviderId = 1; // aws
+    private static final int cloudProviderRegionId = 4; // us-west-2
+    private static final String clusterPlan = "SERVERLESS"; // us-west-2
 
     public HazelcastCloudManager() {
     }
 
-    public void loginToHazelcastCloudUsingEnvironment() throws CloudException {
+    public void loginToCloudUsingEnvironment() throws CloudException {
 
         // StringUtil.isNullOrEmpty() can be used, but somehow it throws class not found exception. Needed to be investigated.
         String baseUrl = System.getenv("BASE_URL");
@@ -59,20 +63,24 @@ public class HazelcastCloudManager {
             throw new CloudException("Login failed");
     }
 
-    public CloudCluster createCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
+    public CloudCluster createCloudCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
         String clusterId = "";
         try {
             String clusterName = "test-cluster-" + UUID.randomUUID();
             String jsonString = String.format("{" +
                             "  \"name\": \"%s\"," +
-                            "  \"clusterTypeId\": 5," + // Serverless cluster
-                            "  \"cloudProviders\": [1]," + // aws
-                            "  \"regions\": [4]," + // us-west-2
-                            "  \"plan\": \"SERVERLESS\"," +
+                            "  \"clusterTypeId\": %d," + // Serverless cluster
+                            "  \"cloudProviders\": [%d]," + // aws
+                            "  \"regions\": [%d]," + // us-west-2
+                            "  \"plan\": \"%s\"," +
                             "  \"hazelcastVersion\": \"%s\"," +
                             "  \"tlsEnabled\": %b" +
                             "}",
                     clusterName,
+                    clusterTypeId,
+                    cloudProviderId,
+                    cloudProviderRegionId,
+                    clusterPlan,
                     hazelcastVersion,
                     isTlsEnabled);
 
@@ -86,7 +94,7 @@ public class HazelcastCloudManager {
                 LOG.info(maskValueOfToken(responseString));
                 clusterId = mapper.readTree(responseString).get("id").asText();
                 waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-                return getCluster(clusterId);
+                return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
             // Cluster id could be also empty if a problem occurred before cluster id exist
@@ -94,33 +102,11 @@ public class HazelcastCloudManager {
         }
     }
 
-    public void setClusterMemberCount(String clusterId, int totalMemberCount) throws CloudException {
-        String requestUrl = String.format("%s/cluster/%s/updateMemory", baseUrl, clusterId);
-        try {
-
-            String requestBody = String.format("{\"memory\": %d, \"autoScalingEnabled\": false}", clusterId, totalMemberCount);
-            RequestBody body = RequestBody.create(JSON, requestBody);
-            Request request = new Request.Builder()
-                    .url(requestUrl)
-                    .post(body)
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", String.format("Bearer %s", bearerToken))
-                    .build();
-            call = client.newCall(request);
-            Response response = call.execute();
-            String responseBody = response.body().string();
-            LOG.info(mapper.readTree(responseBody).get("state"));
-            waitForStateOfCluster(clusterId,"RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-        } catch (Exception e) {
-            throw new CloudException(String.format("Set member size of cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
-        }
+    public CloudCluster getCloudCluster(String clusterId) throws CloudException {
+        return getCloudCluster(clusterId, true);
     }
 
-    public CloudCluster getCluster(String clusterId) throws CloudException {
-        return getCluster(clusterId, true);
-    }
-
-    public CloudCluster getCluster(String clusterId, boolean setupTls) throws CloudException {
+    public CloudCluster getCloudCluster(String clusterId, boolean setupTls) throws CloudException {
         try {
             try (Response res = sendPostRequest("/cluster", null)) {
                 ResponseBody responseBody = res.body();
@@ -151,7 +137,7 @@ public class HazelcastCloudManager {
         }
     }
 
-    public CloudCluster stopHazelcastCloudCluster(String clusterId) throws CloudException {
+    public CloudCluster stopCloudCluster(String clusterId) throws CloudException {
         try {
             try (Response res = sendPostRequest(String.format("/cluster/%s/stop", clusterId), null)) {
                 ResponseBody responseBody = res.body();
@@ -161,14 +147,14 @@ public class HazelcastCloudManager {
                 String responseString = responseBody.string();
                 LOG.info(maskValueOfToken(responseString));
                 waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-                return getCluster(clusterId);
+                return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
             throw new CloudException(String.format("Stop cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
-    public CloudCluster resumeHazelcastCloudCluster(String clusterId) throws CloudException {
+    public CloudCluster resumeCloudCluster(String clusterId) throws CloudException {
         try {
             try (Response res = sendPostRequest(String.format("/cluster/%s/resume", clusterId), null)) {
                 ResponseBody responseBody = res.body();
@@ -178,14 +164,14 @@ public class HazelcastCloudManager {
                 String responseString = responseBody.string();
                 LOG.info(maskValueOfToken(responseString));
                 waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
-                return getCluster(clusterId);
+                return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
             throw new CloudException(String.format("Resume cluster with id %s is failed, Rc stack trace is: %s", clusterId, Arrays.toString(e.getStackTrace())));
         }
     }
 
-    public void deleteCluster(String clusterId) throws CloudException {
+    public void deleteCloudCluster(String clusterId) throws CloudException {
         try {
             try (Response res = sendDeleteRequest(String.format("/cluster/%s", clusterId))) {
                 ResponseBody responseBody = res.body();
@@ -306,7 +292,7 @@ public class HazelcastCloudManager {
         long startTime = System.currentTimeMillis();
         while (true) {
             // Don't setup tls, we just want to check if cluster is deleted
-            if(getCluster(clusterId, false) == null)
+            if(getCloudCluster(clusterId, false) == null)
                 return;
             if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
                 break;
