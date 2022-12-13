@@ -11,13 +11,12 @@ struct Cluster{
 struct CloudCluster{
     1:string id;
     2:string name;
-    3:string nameForConnect
-    4:string hazelcastVersion;
-    5:bool isTlsEnabled;
-    6:string state;
-    7:string token;
-    8:string certificatePath
-    9:string tlsPassword
+    3:string hazelcastVersion;
+    4:bool isTlsEnabled;
+    5:string state;
+    6:string token;
+    7:string certificatePath
+    8:string tlsPassword
 }
 
 struct Member{
