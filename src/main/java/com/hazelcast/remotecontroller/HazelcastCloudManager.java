@@ -208,8 +208,6 @@ public class HazelcastCloudManager {
     private Response sendPostRequest(String endpoint, String jsonString) throws CloudException {
         URI uri = URI.create(baseUrl + endpoint);
         try {
-            String bearerTokenHeader = String.format("Bearer %s", bearerToken);
-            LOG.warn(bearerTokenHeader);
             Request.Builder reqBuilder = new Request.Builder()
                     .url(HttpUrl.get(uri))
                     .header("Authorization", String.format("Bearer %s", bearerToken))
