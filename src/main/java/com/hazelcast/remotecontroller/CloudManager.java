@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public class HazelcastCloudManager {
+public class CloudManager {
     private static final OkHttpClient client = new OkHttpClient();
     private String baseUrl;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -33,7 +33,7 @@ public class HazelcastCloudManager {
     private static final int cloudProviderRegionId = 4; // us-west-2
     private static final String clusterPlan = "SERVERLESS"; // us-west-2
 
-    public HazelcastCloudManager() {
+    public CloudManager() {
     }
 
     public void loginToCloudUsingEnvironment() throws CloudException {

@@ -11,7 +11,7 @@ import java.util.Locale;
 public class RemoteControllerHandler implements RemoteController.Iface {
 
     private ClusterManager clusterManager;
-    private HazelcastCloudManager cloudManager;
+    private CloudManager cloudManager;
 
     public RemoteControllerHandler() {
         this.clusterManager = new ClusterManager();
@@ -92,14 +92,14 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     @Override
     public void loginToCloudUsingEnvironment() throws TException {
         if(cloudManager == null)
-            cloudManager = new HazelcastCloudManager();
+            cloudManager = new CloudManager();
         cloudManager.loginToCloudUsingEnvironment();
     }
 
     @Override
     public void loginToCloud(String uri, String apiKey, String apiSecret) throws TException {
         if(cloudManager == null)
-            cloudManager = new HazelcastCloudManager();
+            cloudManager = new CloudManager();
         cloudManager.loginToCloud(uri, apiKey, apiSecret);
     }
 
@@ -128,7 +128,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
         getCloudManager().deleteCloudCluster(id);
     }
 
-    private HazelcastCloudManager getCloudManager() throws CloudException {
+    private CloudManager getCloudManager() throws CloudException {
         if(cloudManager == null)
             throw new CloudException("It seems cloud manager is null, did you login?");
         return cloudManager;
