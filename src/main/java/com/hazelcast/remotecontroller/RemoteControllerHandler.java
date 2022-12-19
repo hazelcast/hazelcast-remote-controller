@@ -148,6 +148,9 @@ public class RemoteControllerHandler implements RemoteController.Iface {
         if (engine == null) {
             throw new IllegalArgumentException("Could not find ScriptEngine named:" + engineName);
         }
+        
+        // Interpret `clusterId` as null if it is empty
+        // Because thrift cpp-bindings don't support null String.
         if (clusterId != null && !clusterId.isEmpty()) {
             int i = 0;
             for (HazelcastInstance instance : clusterManager.getCluster(clusterId).getInstances()) {
