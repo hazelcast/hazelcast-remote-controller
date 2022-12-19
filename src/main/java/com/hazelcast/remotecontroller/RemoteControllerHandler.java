@@ -148,7 +148,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
         if (engine == null) {
             throw new IllegalArgumentException("Could not find ScriptEngine named:" + engineName);
         }
-        if (clusterId != null) {
+        if (clusterId != null && !clusterId.isEmpty()) {
             int i = 0;
             for (HazelcastInstance instance : clusterManager.getCluster(clusterId).getInstances()) {
                 engine.put("instance_" + i++, instance);
