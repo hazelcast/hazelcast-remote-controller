@@ -27,7 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class CloudManager {
-    private static final OkHttpClient client = new OkHttpClient();
+    private static final OkHttpClient CLIENT = new OkHttpClient();
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 5;
@@ -229,7 +229,7 @@ public class CloudManager {
                 reqBuilder.post(RequestBody.create(null, new byte[0]));
             }
             Request request = reqBuilder.build();
-            call = client.newCall(request);
+            call = CLIENT.newCall(request);
             return call.execute();
         } catch (Exception e) {
             Log.warn(e.toString());
@@ -247,7 +247,7 @@ public class CloudManager {
                     .header("Content-Type", "application/json")
                     .get()
                     .build();
-            call = client.newCall(request);
+            call = CLIENT.newCall(request);
             return call.execute();
         } catch (Exception e) {
             Log.warn(e.toString());
@@ -265,7 +265,7 @@ public class CloudManager {
                     .header("Content-Type", "application/json")
                     .build();
 
-            call = client.newCall(request);
+            call = CLIENT.newCall(request);
             return call.execute();
         } catch (Exception e) {
             Log.warn(e.toString());
@@ -286,7 +286,7 @@ public class CloudManager {
                     .get()
                     .header("Authorization", String.format("Bearer %s", bearerToken))
                     .build();
-            call = client.newCall(request);
+            call = CLIENT.newCall(request);
             Response response = call.execute();
             try {
                 ResponseBody responseBody = response.body();
@@ -366,7 +366,7 @@ public class CloudManager {
                     .post(body)
                     .header("Content-Type", "application/json")
                     .build();
-            call = client.newCall(request);
+            call = CLIENT.newCall(request);
             Response response = call.execute();
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
@@ -423,7 +423,7 @@ public class CloudManager {
                 .header("Authorization", String.format("Bearer %s", bearerToken))
                 .build();
 
-        call = client.newCall(request);
+        call = CLIENT.newCall(request);
         Response response = call.execute();
         try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
             stream.write(response.body().bytes());
