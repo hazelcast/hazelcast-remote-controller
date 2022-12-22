@@ -2,8 +2,14 @@ package com.hazelcast.remotecontroller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
 import okhttp3.Response;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.HttpUrl;
+import okhttp3.Call;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import net.lingala.zip4j.ZipFile;
@@ -13,54 +19,62 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class CloudManager {
     private static final OkHttpClient client = new OkHttpClient();
-    private String baseUrl;
-    private final ObjectMapper mapper = new ObjectMapper();
-    private String bearerToken;
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT = 5;
+    private static final int RETRY_TIME_IN_SECOND = 10;
+    private static final int CLUSTER_TYPE_ID = 5; // Serverless cluster
+    private static final int CLOUD_PROVIDER_ID = 1; // aws
+    private static final int CLOUD_PROVIDER_REGION_ID = 4; // us-west-2
+    private static final String CLUSTER_PLAN = "SERVERLESS";
+    private final ObjectMapper mapper = new ObjectMapper();
+    private String baseUrl;
+    private String bearerToken;
     private Call call;
-    private static final int timeoutForClusterStateWait = 5;
-    private static final int retryTimeInSecond = 10;
-    private static final int clusterTypeId = 5; // Serverless cluster
-    private static final int cloudProviderId = 1; // aws
-    private static final int cloudProviderRegionId = 4; // us-west-2
-    private static final String clusterPlan = "SERVERLESS"; // us-west-2
 
     public CloudManager() {
     }
 
-    public void loginToCloudUsingEnvironment() throws CloudException {
+    private static boolean isNullOrEmpty(String s) {
+        return s == null || s.isEmpty();
+    }
 
-        // StringUtil.isNullOrEmpty() can be used, but somehow it throws class not found exception. Needed to be investigated.
+    public void loginToCloudUsingEnvironment() throws CloudException {
         String baseUrl = System.getenv("BASE_URL");
         String apiKey = System.getenv("API_KEY");
         String apiSecret = System.getenv("API_SECRET");
         String nullEnvVariables = "";
-        if(baseUrl == null)
+        if (isNullOrEmpty(baseUrl)) {
             nullEnvVariables = nullEnvVariables.concat(" BASE_URL ");
-        if(apiKey == null)
+        }
+        if (isNullOrEmpty(apiKey)) {
             nullEnvVariables = nullEnvVariables.concat(" API_KEY ");
-        if(apiSecret == null)
+        }
+        if (isNullOrEmpty(apiSecret)) {
             nullEnvVariables = nullEnvVariables.concat(" API_SECRET ");
-
-        if(nullEnvVariables == "")
+        }
+        if (nullEnvVariables.isEmpty()) {
             loginToCloud(baseUrl, apiKey, apiSecret);
-        else
+        } else {
             throw new CloudException("Not all required environment variables are set. These are not set ones: " + nullEnvVariables);
+        }
     }
 
     public void loginToCloud(String url, String apiKey, String apiSecret) throws CloudException {
         baseUrl = url;
         bearerToken = getBearerToken(apiKey, apiSecret);
-        if(bearerToken == null)
+        if (bearerToken == null) {
             throw new CloudException("Login failed");
+        }
     }
 
     public CloudCluster createCloudCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
@@ -77,10 +91,10 @@ public class CloudManager {
                             "  \"tlsEnabled\": %b" +
                             "}",
                     clusterName,
-                    clusterTypeId,
-                    cloudProviderId,
-                    cloudProviderRegionId,
-                    clusterPlan,
+                    CLUSTER_TYPE_ID,
+                    CLOUD_PROVIDER_ID,
+                    CLOUD_PROVIDER_REGION_ID,
+                    CLUSTER_PLAN,
                     hazelcastVersion,
                     isTlsEnabled);
 
@@ -94,7 +108,7 @@ public class CloudManager {
                 handleFailedResponse(response, responseString);
                 LOG.info(maskValueOfToken(responseString));
                 clusterId = mapper.readTree(responseString).get("id").asText();
-                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
                 return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
@@ -134,12 +148,12 @@ public class CloudManager {
                 }
                 LOG.info(maskValueOfToken(responseString));
                 JsonNode rootNode = mapper.readTree(responseString);
-                if(rootNode.asText().equalsIgnoreCase("null"))
+                if (rootNode.asText().equalsIgnoreCase("null")) {
                     return null;
+                }
                 boolean tlsEnabled = rootNode.get("tlsEnabled").asBoolean();
                 CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), rootNode.get("releaseName").asText(), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
-                if(tlsEnabled && setupTls)
-                {
+                if (tlsEnabled && setupTls) {
                     cluster.setCertificatePath(downloadCertificatesAndGetPath(cluster.getId()));
                     cluster.setTlsPassword(getTlsPassword(cluster.getId()));
                 }
@@ -161,7 +175,7 @@ public class CloudManager {
                 String responseString = responseBody.string();
                 handleFailedResponse(res, responseString);
                 LOG.info(maskValueOfToken(responseString));
-                waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
                 return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
@@ -179,7 +193,7 @@ public class CloudManager {
                 String responseString = responseBody.string();
                 handleFailedResponse(res, responseString);
                 LOG.info(maskValueOfToken(responseString));
-                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
                 return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
@@ -197,7 +211,7 @@ public class CloudManager {
                 String responseString = responseBody.string();
                 handleFailedResponse(res, responseString);
                 LOG.info(responseString);
-                waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(timeoutForClusterStateWait));
+                waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
                 LOG.info(String.format("Cluster with id %s is deleted", clusterId));
             }
         } catch (Exception e) {
@@ -212,7 +226,7 @@ public class CloudManager {
                     .url(HttpUrl.get(uri))
                     .header("Authorization", String.format("Bearer %s", bearerToken))
                     .header("Content-Type", "application/json");
-            if(jsonString != null) {
+            if (jsonString != null) {
                 RequestBody body = RequestBody.create(JSON, jsonString);
                 reqBuilder.post(body);
             } else {
@@ -221,8 +235,7 @@ public class CloudManager {
             Request request = reqBuilder.build();
             call = client.newCall(request);
             return call.execute();
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             Log.warn(e.toString());
             throw new CloudException(String.format("Exception while sending a post request to %s with body %s: \n %s",
                     uri, jsonString, getErrorString(e)));
@@ -240,8 +253,7 @@ public class CloudManager {
                     .build();
             call = client.newCall(request);
             return call.execute();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             Log.warn(e.toString());
             throw new CloudException(String.format("Exception while sending a get request to %s: \n %s", uri, getErrorString(e)));
         }
@@ -259,8 +271,7 @@ public class CloudManager {
 
             call = client.newCall(request);
             return call.execute();
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             Log.warn(e.toString());
             throw new CloudException(String.format("Exception while sending a delete request to %s: \n %s", uri, getErrorString(e)));
         }
@@ -313,15 +324,16 @@ public class CloudManager {
                     handleFailedResponse(response, responseString);
                     LOG.info(responseString);
                     currentState = mapper.readTree(responseString).get("state").asText();
-                    if(currentState.equalsIgnoreCase(expectedState))
+                    if (currentState.equalsIgnoreCase(expectedState)) {
                         return;
-                    if(currentState.equalsIgnoreCase("FAILED"))
-                    {
+                    }
+                    if (currentState.equalsIgnoreCase("FAILED")) {
                         throw new CloudException(String.format("Cluster state is failed, state response: %s", responseString));
                     }
-                    if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
+                    if ((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(RETRY_TIME_IN_SECOND)  > timeoutInMillisecond) {
                         break;
-                    TimeUnit.SECONDS.sleep(retryTimeInSecond);
+                    }
+                    TimeUnit.SECONDS.sleep(RETRY_TIME_IN_SECOND);
                 }
             }
             throw new CloudException(String.format("The cluster with id %s did not end up in the %s state in %d milliseconds", clusterId, expectedState, timeoutInMillisecond));
@@ -335,11 +347,13 @@ public class CloudManager {
         long startTime = System.currentTimeMillis();
         while (true) {
             // Don't setup tls, we just want to check if cluster is deleted
-            if(getCloudCluster(clusterId, false) == null)
+            if (getCloudCluster(clusterId, false) == null) {
                 return;
-            if((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(retryTimeInSecond)  > timeoutInMillisecond)
+            }
+            if ((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(RETRY_TIME_IN_SECOND)  > timeoutInMillisecond) {
                 break;
-            TimeUnit.SECONDS.sleep(retryTimeInSecond);
+            }
+            TimeUnit.SECONDS.sleep(RETRY_TIME_IN_SECOND);
         }
         throw new CloudException(String.format("The cluster with id %s is not deleted in %d millisecond", clusterId, timeoutInMillisecond));
     }
@@ -384,13 +398,12 @@ public class CloudManager {
             Path pathClusterId = Paths.get(userHome, clusterId);
 
             // If folder with clusterId is there then certificates are already downloaded
-            if(!Files.exists(pathClusterId))
+            if (!Files.exists(pathClusterId))
             {
                 createFolderAndDownloadCertificates(pathClusterId, clusterId);
             }
             return Paths.get(pathClusterId.toString(), "certificates").toString() + File.separator;
-        }
-        catch(Exception e)
+        } catch (Exception e)
         {
             throw new CloudException(String.format("Problem occurred during certificates download for cluster with id %s, Rc stack trace is: %s", clusterId, getErrorString(e)));
         }
@@ -414,11 +427,8 @@ public class CloudManager {
 
         call = client.newCall(request);
         Response response = call.execute();
-        FileOutputStream stream = new FileOutputStream(pathResponseZip.toString());
-        try {
+        try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
             stream.write(response.body().bytes());
-        } finally {
-            stream.close();
         }
 
         ZipFile zipFile = new ZipFile(pathResponseZip.toString());
