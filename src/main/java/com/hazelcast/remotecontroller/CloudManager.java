@@ -30,7 +30,7 @@ public class CloudManager {
     private static final OkHttpClient client = new OkHttpClient();
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT = 5;
+    private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 5;
     private static final int RETRY_TIME_IN_SECOND = 10;
     private static final int CLUSTER_TYPE_ID = 5; // Serverless cluster
     private static final int CLOUD_PROVIDER_ID = 1; // aws
@@ -105,10 +105,10 @@ public class CloudManager {
                     throw new CloudException(String.format("Response body is null while creating a dev mode cluster: %s", response));
                 }
                 String responseString = responseBody.string();
-                handleFailedResponse(response, responseString);
+                throwIfResponseFailed(response, responseString);
                 LOG.info(maskValueOfToken(responseString));
                 clusterId = mapper.readTree(responseString).get("id").asText();
-                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
+                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
@@ -121,7 +121,7 @@ public class CloudManager {
         return e + "\n" + Arrays.toString(e.getStackTrace());
     }
 
-    private static void handleFailedResponse(Response response, String responseString) throws CloudException {
+    private static void throwIfResponseFailed(Response response, String responseString) throws CloudException {
         if (!response.isSuccessful()) {
             String errorString = String.format("Unexpected http code %d Response: %s", response.code(), responseString);
             LOG.error(errorString);
@@ -141,15 +141,11 @@ public class CloudManager {
                     throw new CloudException(String.format("Response body is null while getting a cluster: %s", res));
                 }
                 String responseString = responseBody.string();
-                try {
-                    handleFailedResponse(res, responseString);
-                } catch (CloudException e) {
-                    return null;
-                }
+                throwIfResponseFailed(res, responseString);
                 LOG.info(maskValueOfToken(responseString));
                 JsonNode rootNode = mapper.readTree(responseString);
                 if (rootNode.asText().equalsIgnoreCase("null")) {
-                    return null;
+                    throw new CloudException(String.format("Cluster with id %s is not found", clusterId));
                 }
                 boolean tlsEnabled = rootNode.get("tlsEnabled").asBoolean();
                 CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), rootNode.get("releaseName").asText(), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
@@ -173,9 +169,9 @@ public class CloudManager {
                     throw new CloudException(String.format("Response body is null while stopping a cluster: %s", res));
                 }
                 String responseString = responseBody.string();
-                handleFailedResponse(res, responseString);
+                throwIfResponseFailed(res, responseString);
                 LOG.info(maskValueOfToken(responseString));
-                waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
+                waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
@@ -191,9 +187,9 @@ public class CloudManager {
                     throw new CloudException(String.format("Response body is null while resuming a cluster: %s", res));
                 }
                 String responseString = responseBody.string();
-                handleFailedResponse(res, responseString);
+                throwIfResponseFailed(res, responseString);
                 LOG.info(maskValueOfToken(responseString));
-                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
+                waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 return getCloudCluster(clusterId);
             }
         } catch (Exception e) {
@@ -209,9 +205,9 @@ public class CloudManager {
                     throw new CloudException(String.format("Response body is null while deleting a cluster: %s", res));
                 }
                 String responseString = responseBody.string();
-                handleFailedResponse(res, responseString);
+                throwIfResponseFailed(res, responseString);
                 LOG.info(responseString);
-                waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT));
+                waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 LOG.info(String.format("Cluster with id %s is deleted", clusterId));
             }
         } catch (Exception e) {
@@ -235,7 +231,7 @@ public class CloudManager {
             Request request = reqBuilder.build();
             call = client.newCall(request);
             return call.execute();
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.warn(e.toString());
             throw new CloudException(String.format("Exception while sending a post request to %s with body %s: \n %s",
                     uri, jsonString, getErrorString(e)));
@@ -271,7 +267,7 @@ public class CloudManager {
 
             call = client.newCall(request);
             return call.execute();
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.warn(e.toString());
             throw new CloudException(String.format("Exception while sending a delete request to %s: \n %s", uri, getErrorString(e)));
         }
@@ -298,13 +294,12 @@ public class CloudManager {
                     throw new CloudException(String.format("Response body is null while getting tls password for cluster: %s", response));
                 }
                 String responseString = responseBody.string();
-                handleFailedResponse(response, responseString);
+                throwIfResponseFailed(response, responseString);
                 return mapper.readTree(responseString).get("tlsPassword").asText();
             } catch (Exception e) {
                 throw new CloudException("Body is null for tlsPassword. Rc error is: " + getErrorString(e));
             }
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             LOG.warn(e);
             throw new CloudException(String.format("Get tls password with cluster id %s is failed, Rc error is: %s", clusterId, getErrorString(e)));
         }
@@ -321,7 +316,7 @@ public class CloudManager {
                         throw new CloudException(String.format("Response body is null while waiting for state of a cluster: %s", response));
                     }
                     String responseString = responseBody.string();
-                    handleFailedResponse(response, responseString);
+                    throwIfResponseFailed(response, responseString);
                     LOG.info(responseString);
                     currentState = mapper.readTree(responseString).get("state").asText();
                     if (currentState.equalsIgnoreCase(expectedState)) {
@@ -346,8 +341,11 @@ public class CloudManager {
     private void waitForDeletedCluster(String clusterId, long timeoutInMillisecond) throws CloudException, InterruptedException {
         long startTime = System.currentTimeMillis();
         while (true) {
-            // Don't setup tls, we just want to check if cluster is deleted
-            if (getCloudCluster(clusterId, false) == null) {
+            try {
+                // Don't setup tls, we just want to check if cluster is deleted
+                getCloudCluster(clusterId, false);
+            } catch (CloudException e) {
+                // Cluster is deleted
                 return;
             }
             if ((System.currentTimeMillis() - startTime) + TimeUnit.SECONDS.toMillis(RETRY_TIME_IN_SECOND)  > timeoutInMillisecond) {
@@ -375,7 +373,7 @@ public class CloudManager {
                 throw new CloudException(String.format("Response body is null while getting bearer token: %s", response));
             }
             String responseString = responseBody.string();
-            handleFailedResponse(response, responseString);
+            throwIfResponseFailed(response, responseString);
             LOG.info(maskValueOfToken(responseString));
             return mapper.readTree(responseString).get("token").asText();
         } catch (Exception e) {
