@@ -8,6 +8,10 @@ struct Cluster{
     1:string id;
 }
 
+struct DockerCluster{
+    1:string id;
+}
+
 struct CloudCluster{
     1:string id;
     2:string name;
@@ -22,6 +26,12 @@ struct CloudCluster{
 
 struct Member{
     1:string uuid;
+    2:string host;
+    3:i32 port;
+}
+
+struct DockerMember{
+    1:string containerId;
     2:string host;
     3:i32 port;
 }
@@ -59,6 +69,12 @@ service RemoteController {
     bool terminateMember(1:string clusterId, 2:string memberId);
     bool suspendMember(1:string clusterId, 2:string memberId);
     bool resumeMember(1:string clusterId, 2:string memberId);
+
+    DockerCluster createDockerCluster(1:string dockerImageString, 2:string xmlconfigPath) throws (1:ServerException serverException);
+    DockerMember startDockerMember(1:string dockerClusterId) throws (1:ServerException serverException);
+    bool shutdownDockerMember(1:string dockerClusterId, 2:string dockerMemberId);
+
+    bool shutdownDockerCluster(1:string dockerClusterId);
 
     bool shutdownCluster(1:string clusterId);
     bool terminateCluster(1:string clusterId);

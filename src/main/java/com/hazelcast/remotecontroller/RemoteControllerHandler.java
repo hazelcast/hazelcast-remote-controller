@@ -3,6 +3,8 @@ package com.hazelcast.remotecontroller;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.internal.management.ScriptEngineManagerContext;
 import org.apache.thrift.TException;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -10,11 +12,13 @@ import java.util.Locale;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
 
-    private ClusterManager clusterManager;
+    private final ClusterManager clusterManager;
+    private final DockerClusterManager dockerClusterManager;
     private HazelcastCloudManager cloudManager;
 
     public RemoteControllerHandler() {
         this.clusterManager = new ClusterManager();
+        this.dockerClusterManager = new DockerClusterManager();
     }
 
     @Override
@@ -38,7 +42,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public Cluster createClusterKeepClusterName(String hzVersion, String xmlconfig) throws ServerException, TException {
+    public Cluster createClusterKeepClusterName(String hzVersion, String xmlconfig) throws TException {
         return clusterManager.createCluster(hzVersion, xmlconfig, true);
     }
 
@@ -68,6 +72,26 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
+    public DockerCluster createDockerCluster(String dockerImageString, String xmlconfig) throws TException {
+        return dockerClusterManager.createCluster(dockerImageString, xmlconfig);
+    }
+
+    @Override
+    public DockerMember startDockerMember(String dockerClusterId) throws TException {
+        return dockerClusterManager.startMember(dockerClusterId);
+    }
+
+    @Override
+    public boolean shutdownDockerMember(String dockerClusterId, String dockerMemberId) throws TException {
+        return dockerClusterManager.shutdownMember(dockerClusterId, dockerMemberId);
+    }
+
+    @Override
+    public boolean shutdownDockerCluster(String dockerClusterId) throws TException {
+        return dockerClusterManager.shutdownCluster(dockerClusterId);
+    }
+
+    @Override
     public boolean shutdownCluster(String clusterId) throws TException {
         return clusterManager.shutdownCluster(clusterId);
     }
@@ -79,13 +103,11 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     @Override
     public Cluster splitMemberFromCluster(String memberId) throws TException {
-        //TODO
         return null;
     }
 
     @Override
     public Cluster mergeMemberToCluster(String clusterId, String memberId) throws TException {
-        //TODO
         return null;
     }
 
