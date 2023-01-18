@@ -8,6 +8,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.util.List;
 import java.util.Locale;
 
 public class RemoteControllerHandler implements RemoteController.Iface {
@@ -47,6 +48,16 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
+    public boolean shutdownCluster(String clusterId) throws TException {
+        return clusterManager.shutdownCluster(clusterId);
+    }
+
+    @Override
+    public boolean terminateCluster(String clusterId) throws TException {
+        return clusterManager.terminateCluster(clusterId);
+    }
+
+    @Override
     public Member startMember(String clusterId) throws TException {
         return clusterManager.startMember(clusterId);
     }
@@ -77,6 +88,11 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
+    public boolean shutdownDockerCluster(String dockerClusterId) throws TException {
+        return dockerClusterManager.shutdownCluster(dockerClusterId);
+    }
+
+    @Override
     public DockerMember startDockerMember(String dockerClusterId) throws TException {
         return dockerClusterManager.startMember(dockerClusterId);
     }
@@ -87,28 +103,13 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public boolean shutdownDockerCluster(String dockerClusterId) throws TException {
-        return dockerClusterManager.shutdownCluster(dockerClusterId);
+    public boolean splitClusterAs(String dockerClusterId, List<DockerMember> brain1, List<DockerMember> brain2) throws TException {
+        return dockerClusterManager.splitClusterAs(dockerClusterId, brain1, brain2);
     }
 
     @Override
-    public boolean shutdownCluster(String clusterId) throws TException {
-        return clusterManager.shutdownCluster(clusterId);
-    }
-
-    @Override
-    public boolean terminateCluster(String clusterId) throws TException {
-        return clusterManager.terminateCluster(clusterId);
-    }
-
-    @Override
-    public Cluster splitMemberFromCluster(String memberId) throws TException {
-        return null;
-    }
-
-    @Override
-    public Cluster mergeMemberToCluster(String clusterId, String memberId) throws TException {
-        return null;
+    public boolean mergeCluster(String dockerClusterId) throws TException {
+        return dockerClusterManager.mergeCluster(dockerClusterId);
     }
 
     @Override

@@ -1,38 +1,24 @@
 package com.hazelcast.remotecontroller;
 
-import com.hazelcast.core.Hazelcast;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
-import java.util.UUID;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DockerClusterManager {
 
-    private static Logger LOG = LogManager.getLogger(Main.class);
+    private static final Logger LOG = LogManager.getLogger(Main.class);
     private final ConcurrentHashMap<String, HzDockerCluster> clusterMap = new ConcurrentHashMap<>();
-    private final Network network;
 
     public DockerClusterManager() {
-        this.network = Network.newNetwork();
     }
 
     public DockerCluster createCluster(String dockerImageString, String xmlconfig) throws ServerException {
         try {
             HzDockerCluster hzDockerCluster = new HzDockerCluster(dockerImageString, xmlconfig);
-            final HzDockerCluster existingCluster = this.clusterMap.putIfAbsent(hzDockerCluster.getId(), hzDockerCluster);
-            if (existingCluster != null) {
-                if (!existingCluster.getXmlConfigPath().equals(xmlconfig)) {
-                    throw new ServerException("A docker cluster with the same cluster-name " + hzDockerCluster.getId()
-                            + " but with a different config already exists. Existing cluster config: " + hzDockerCluster.getXmlConfigPath()
-                            + "\n" + ", new config:" + xmlconfig);
-                }
-            }
-            return new DockerCluster(hzDockerCluster.getId());
+            this.clusterMap.put(hzDockerCluster.getClusterId(), hzDockerCluster);
+            return new DockerCluster(hzDockerCluster.getClusterId());
         } catch (Exception e) {
             LOG.warn(e);
             throw new ServerException(e.getMessage());
@@ -40,83 +26,61 @@ public class DockerClusterManager {
     }
 
     public DockerMember startMember(String clusterId) throws ServerException {
-
-        LOG.info("Starting a DockerMember on cluster : " + clusterId);
+        LOG.info("Starting a container on docker cluster with cluster id: " + clusterId);
         HzDockerCluster hzDockerCluster = clusterMap.get(clusterId);
         if (hzDockerCluster == null) {
-            String log = "Cannot find Cluster with id:" + clusterId;
+            String log = "Cannot find docker cluster with id:" + clusterId;
             LOG.info(log);
             throw new ServerException(log);
         }
-        String dockerImageString = hzDockerCluster.getDockerImageString();
-
-        MountableFile mountableFile = MountableFile.forHostPath(hzDockerCluster.getXmlConfigPath());
-
-        // This port is from the container's point of view, actual port on the host is mapped by testcontainers randomly
-        GenericContainer container = new GenericContainer(DockerImageName.parse(dockerImageString))
-                .withEnv("JAVA_OPTS", "-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.xml")
-                .withEnv("HZ_PHONE_HOME_ENABLED", "false")
-                .withCopyFileToContainer(mountableFile, "/opt/hazelcast/config_ext/hazelcast.xml")
-                .withNetwork(this.network)
-                .withExposedPorts(5701);
-        Integer port = container.getMappedPort(5701);
-        String host = container.getHost();
-
-
-        String containerId = UUID.randomUUID().toString();
-        hzDockerCluster.addInstance(containerId, container);
-        return new DockerMember(containerId, host, port);
+        return hzDockerCluster.createDockerMember();
     }
 
-    public boolean shutdownMember(String clusterId, String memberId) {
-        LOG.info("Shutting down the DockerMember " + memberId + "on cluster : " + clusterId);
-        HzDockerCluster hzCluster = clusterMap.get(clusterId);
-        if (hzCluster == null) {
-            LOG.info("Cluster does not exist: " + clusterId);
+    public boolean shutdownMember(String dockerClusterId, String containerId) {
+        LOG.info("Shutting down the member with container id " + containerId + " on docker cluster : " + dockerClusterId);
+        HzDockerCluster hzDockerCluster = this.clusterMap.get(dockerClusterId);
+        if (hzDockerCluster == null) {
+            LOG.info("Docker cluster does not exist with id: " + dockerClusterId);
             return false;
         }
-        GenericContainer container = hzCluster.getContainerById(memberId);
-        if (container == null) {
-            LOG.info("DockerMember does not exist: " + memberId);
-            return false;
-        }
-        container.close();
-        hzCluster.removeContainer(memberId);
-        return true;
+        return hzDockerCluster.stopAndRemoveContainerById(containerId);
     }
 
     public boolean shutdownCluster(String clusterId) {
-        HzDockerCluster hzCluster = clusterMap.get(clusterId);
+        HzDockerCluster hzCluster = this.clusterMap.get(clusterId);
         if (hzCluster == null) {
-            LOG.info("Cluster does not exist: " + clusterId);
+            LOG.info("Docker cluster does not exist with id: " + clusterId);
             return false;
         }
-        LOG.info("Shutting down the cluster : " + clusterId);
+        LOG.info("Shutting down the docker cluster : " + clusterId);
         try {
             hzCluster.shutdown();
         } catch (Exception e) {
             LOG.info("Exception during cluster shutdown: ", e);
             return false;
         }
-        this.clusterMap.remove(hzCluster.getId());
+        this.clusterMap.remove(hzCluster.getClusterId());
         return true;
     }
 
-    public boolean clean() {
-        LOG.info("Cleaning the R.C. Cluster Manager");
-        shutdownAll();
-        clusterMap.clear();
-        return true;
+    public boolean splitClusterAs(String dockerClusterId, List<DockerMember> brain1, List<DockerMember> brain2) {
+        HzDockerCluster hzCluster = this.clusterMap.get(dockerClusterId);
+        if (hzCluster == null) {
+            LOG.info("Docker cluster does not exist with id: " + dockerClusterId);
+            return false;
+        }
+        LOG.info("Splitting the docker cluster : " + dockerClusterId);
+        return hzCluster.splitClusterAs(brain1, brain2);
     }
 
-    public boolean ping() {
-        LOG.info("Ping ... Pong ...");
-        return true;
-    }
+    public boolean mergeCluster(String dockerClusterId) {
+        HzDockerCluster hzCluster = this.clusterMap.get(dockerClusterId);
+        if (hzCluster == null) {
+            LOG.info("Docker cluster does not exist with id: " + dockerClusterId);
+            return false;
+        }
 
-    public boolean shutdownAll() {
-        LOG.info("Shutting down the cluster.");
-        Hazelcast.shutdownAll();
-        return true;
+        LOG.info("Merging the docker cluster : " + dockerClusterId);
+        return hzCluster.mergeCluster();
     }
 }

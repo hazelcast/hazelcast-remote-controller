@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClusterManager {
 
-    private static Logger LOG = LogManager.getLogger(Main.class);
+    private static final Logger LOG = LogManager.getLogger(Main.class);
 
     private final ConcurrentHashMap<String, HzCluster> clusterMap = new ConcurrentHashMap<>();
 
@@ -179,6 +179,4 @@ public class ClusterManager {
         this.clusterMap.remove(hzCluster.getId());
         return true;
     }
-
-
 }

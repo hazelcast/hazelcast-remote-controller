@@ -63,6 +63,8 @@ service RemoteController {
 
     Cluster createCluster(1:string hzVersion, 2:string xmlconfig) throws (1:ServerException serverException);
     Cluster createClusterKeepClusterName(1:string hzVersion, 2:string xmlconfig) throws (1:ServerException serverException);
+    bool shutdownCluster(1:string clusterId);
+    bool terminateCluster(1:string clusterId);
 
     Member startMember(1:string clusterId) throws (1:ServerException serverException);
     bool shutdownMember(1:string clusterId, 2:string memberId);
@@ -70,17 +72,15 @@ service RemoteController {
     bool suspendMember(1:string clusterId, 2:string memberId);
     bool resumeMember(1:string clusterId, 2:string memberId);
 
+    // Docker related methods follow
     DockerCluster createDockerCluster(1:string dockerImageString, 2:string xmlconfigPath) throws (1:ServerException serverException);
-    DockerMember startDockerMember(1:string dockerClusterId) throws (1:ServerException serverException);
-    bool shutdownDockerMember(1:string dockerClusterId, 2:string dockerMemberId);
-
     bool shutdownDockerCluster(1:string dockerClusterId);
 
-    bool shutdownCluster(1:string clusterId);
-    bool terminateCluster(1:string clusterId);
+    DockerMember startDockerMember(1:string dockerClusterId) throws (1:ServerException serverException);
+    bool shutdownDockerMember(1:string dockerClusterId, 2:string containerId);
 
-    Cluster splitMemberFromCluster(1:string memberId)
-    Cluster mergeMemberToCluster(1:string clusterId, 2:string memberId)
+    bool splitClusterAs(1:string dockerClusterId, 2:list<DockerMember> brain1, 3:list<DockerMember> brain2);
+    bool mergeCluster(1:string dockerClusterId);
 
     /**
      * Reads the environment variables and calls loginToHazelcastCloud() method with these variables.
