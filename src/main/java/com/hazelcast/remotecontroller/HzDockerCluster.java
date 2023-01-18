@@ -8,6 +8,9 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +36,7 @@ public class HzDockerCluster {
     }
 
     public void addContainer(String containerId, GenericContainer container) {
-        this.containers.putIfAbsent(containerId, container);
+        this.containers.put(containerId, container);
     }
 
     public DockerMember createDockerMember() {
@@ -98,14 +101,19 @@ public class HzDockerCluster {
             Network brain1Network = Network.newNetwork();
             Network brain2Network = Network.newNetwork();
 
+            LOG.warn(brain1Network.getId());
+            LOG.warn(brain2Network.getId());
+
             for (DockerMember member : brain1) {
                 GenericContainer container = this.containers.get(member.getContainerId());
                 connectContainerToNetwork(container.getContainerId(), brain1Network.getId());
+                container.setNetwork(brain1Network);
             }
 
             for (DockerMember member : brain2) {
                 GenericContainer container = this.containers.get(member.getContainerId());
                 connectContainerToNetwork(container.getContainerId(), brain2Network.getId());
+                container.setNetwork(brain2Network);
             }
         } catch (Exception e) {
             LOG.error("Could not connect containers to the brain networks during split brain attempt", e);
@@ -131,10 +139,17 @@ public class HzDockerCluster {
         return true;
     }
 
-    public void shutdown() {
+    public void shutdown() throws IOException {
         Iterator<GenericContainer> iterator = this.containers.values().iterator();
         if (iterator.hasNext()) {
-            iterator.next().stop();
+            GenericContainer container = iterator.next();
+            String str = container.getLogs();
+            LOG.warn(str);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(container.getContainerId() + ".logs", true));
+            writer.append(str);
+            writer.flush();
+            writer.close();
+            container.stop();
         }
         this.containers.clear();
     }
@@ -158,12 +173,14 @@ public class HzDockerCluster {
     private void connectAllContainersToClusterNetwork() {
         for (GenericContainer container : this.containers.values()) {
             connectContainerToNetwork(container.getContainerId(), this.network.getId());
+            container.setNetwork(this.network);
         }
     }
 
     private void disconnectAllContainersFromTheirNetworks() {
         for (GenericContainer container : this.containers.values()) {
             Network network = container.getNetwork();
+            LOG.warn(network.getId());
             if (network == null) {
                 throw new RuntimeException("Container " + container.getContainerId() + " is not connected to a network");
             }
