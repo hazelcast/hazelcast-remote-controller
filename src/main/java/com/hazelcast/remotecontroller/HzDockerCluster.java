@@ -56,7 +56,12 @@ public class HzDockerCluster {
                     .withNetwork(network)
                     .withExposedPorts(5701);
         }
-        container.start();
+        try {
+            container.start();
+        } catch (Exception e) {
+            LOG.warn("Could not start container: ", e);
+            throw e;
+        }
         if (!container.isRunning()) {
             throw new RuntimeException("Container could not be started");
         }
@@ -141,13 +146,11 @@ public class HzDockerCluster {
 
     public void shutdown() throws IOException {
         Iterator<GenericContainer> iterator = this.containers.values().iterator();
-        if (iterator.hasNext()) {
+        while (iterator.hasNext()) {
             GenericContainer container = iterator.next();
             String str = container.getLogs();
-            LOG.warn(str);
             BufferedWriter writer = new BufferedWriter(new FileWriter(container.getContainerId() + ".logs", true));
             writer.append(str);
-            writer.flush();
             writer.close();
             container.stop();
         }
