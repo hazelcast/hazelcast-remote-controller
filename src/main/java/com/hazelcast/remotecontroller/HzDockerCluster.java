@@ -1,16 +1,27 @@
 package com.hazelcast.remotecontroller;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.model.ContainerNetwork;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.FrameConsumerResultCallback;
+import org.testcontainers.containers.output.OutputFrame;
+import org.testcontainers.containers.output.ToStringConsumer;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
+import org.testcontainers.utility.TestEnvironment;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +29,23 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 public class HzDockerCluster {
+    private static class ExecResult {
+        public final Long exitCode;
+        public final String stdout;
+        public final String stderr;
+
+        public ExecResult(Long exitCode, String stdout, String stderr) {
+            this.exitCode = exitCode;
+            this.stdout = stdout;
+            this.stderr = stderr;
+        }
+
+        public boolean isSuccessful() {
+            return exitCode == 0L;
+        }
+    }
 
     private static Logger LOG = LogManager.getLogger(Main.class);
     private final String clusterId = UUID.randomUUID().toString();
@@ -55,29 +82,61 @@ public class HzDockerCluster {
                     .withEnv("HZ_PHONE_HOME_ENABLED", "false")
                     .withCopyFileToContainer(mountableFile, "/opt/hazelcast/config_ext/hazelcast.xml")
                     .withNetwork(network)
+                    // For iptables to work, (at least for Mac) we need to run the container in privileged mode
+                    .withPrivilegedMode(true)
                     .withExposedPorts(5701);
         } else {
             container = new GenericContainer(DockerImageName.parse(dockerImageString))
                     .withEnv("HZ_PHONE_HOME_ENABLED", "false")
                     .withNetwork(network)
+                    // For iptables to work, (at least for Mac) we need to run the container in privileged mode
+                    .withPrivilegedMode(true)
                     .withExposedPorts(5701);
         }
-        try {
-            container.start();
-        } catch (Exception e) {
-            LOG.error("Could not start container: ", e);
-            throw e;
-        }
+        container.start();
         if (!container.isRunning()) {
             throw new RuntimeException("Container could not be started");
         }
 
         Integer port = container.getMappedPort(5701);
         String host = container.getHost();
+        String containerId = container.getContainerId();
 
-        String containerId = UUID.randomUUID().toString();
-        this.addContainer(containerId, container);
+        this.addContainer(container.getContainerId(), container);
+        tryInstallingIptables(container);
         return new DockerMember(containerId, host, port);
+    }
+
+    private static void tryInstallingIptables(GenericContainer container) {
+        LOG.info("Installing iptables in the container.");
+        boolean installed = tryInstallingIptablesWithApk(container);
+        if (!installed) {
+            boolean installedWithApt = tryInstallingIptablesWithAptGet(container);
+            if(!installedWithApt) {
+                throw new RuntimeException("Could not install iptables in the container.");
+            }
+        }
+    }
+
+    private static boolean tryInstallingIptablesWithApk(GenericContainer container) {
+        try {
+            execAsRootAndThrowOnError(container, "apk", "update");
+            execAsRootAndThrowOnError(container, "apk", "add", "iptables");
+            return true;
+        } catch (Throwable e) {
+            LOG.error(e);
+            return false;
+        }
+    }
+
+    private static boolean tryInstallingIptablesWithAptGet(GenericContainer container) {
+        try {
+            execAsRootAndThrowOnError(container, "apt-get", "update");
+            execAsRootAndThrowOnError(container, "apt-get", "install", "iptables");
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     public boolean stopAndRemoveContainerById(String containerId) {
@@ -160,11 +219,23 @@ public class HzDockerCluster {
         return true;
     }
 
-    private void blockInputFromContainers(GenericContainer containerToBeAffected, List<DockerMember> containers) throws IOException, InterruptedException {
-        for (DockerMember member : containers) {
-            containerToBeAffected.execInContainer(String.format("sudo iptables -A INPUT -s %s -j DROP", member.getHost()));
-            addToBlockRule(containerToBeAffected.getContainerId(), member.getHost());
+    private void blockInputFromContainers(GenericContainer containerToBeAffected, List<DockerMember> dockerMembers) throws IOException, InterruptedException {
+        for (DockerMember member : dockerMembers) {
+            GenericContainer container = this.containers.get(member.getContainerId());
+            String containerIpAddress = getContainerIpAddress(container);
+            execAsRootAndThrowOnError(containerToBeAffected, "iptables", "-A", "INPUT", "-s", containerIpAddress, "-j", "DROP");
+            addToBlockRule(containerToBeAffected.getContainerId(), containerIpAddress);
         }
+    }
+
+    private static String getContainerIpAddress(GenericContainer container) {
+        Collection<ContainerNetwork> networks = container.getContainerInfo().getNetworkSettings().getNetworks().values();
+        if (networks.isEmpty()) {
+            throw new RuntimeException("Container " + container.getContainerId() + " is not connected to any network."
+            + " In order to split brain the container, it has to be connected to a network.");
+        }
+        ContainerNetwork network = networks.iterator().next();
+        return network.getIpAddress();
     }
 
     private void addToBlockRule(String containerId, String blockedIp) {
@@ -178,9 +249,58 @@ public class HzDockerCluster {
     }
 
     private void unblockInputFromContainers(String containerId, List<String> blockedIps) throws IOException, InterruptedException {
-        GenericContainer containerToBeAffected = this.containers.get(containerId);
+        GenericContainer container = this.containers.get(containerId);
         for (String ip : blockedIps) {
-            containerToBeAffected.execInContainer(String.format("sudo iptables -D INPUT -s %s -j DROP", ip));
+            execAsRootAndThrowOnError(container, "iptables", "-D", "INPUT", "-s", ip, "-j", "DROP");
+        }
+    }
+
+    private static void execAsRootAndThrowOnError(GenericContainer container, String... cmd) throws IOException, InterruptedException {
+        ExecResult execResult = execInContainerAsRoot(container, cmd);
+        Long exitCode = execResult.exitCode;
+        String stdout = execResult.stdout;
+        String stderr = execResult.stderr;
+        if (!execResult.isSuccessful()) {
+            String error = String.format("Could not execute command: %s in container with id: %s \n", String.join(" ", cmd), container.getContainerId()) +
+                    String.format("Exit code: %d, Stdout: %s, Stderr: %s", exitCode, stdout, stderr);
+            throw new RuntimeException(error);
+        }
+    }
+
+    private static ExecResult execInContainerAsRoot(GenericContainer container, String... cmd) throws IOException, InterruptedException {
+        DockerClient dockerClient = container.getDockerClient();
+        InspectContainerResponse containerInfo = container.getContainerInfo();
+        if (!TestEnvironment.dockerExecutionDriverSupportsExec()) {
+            throw new UnsupportedOperationException("Your docker daemon is running the \"lxc\" driver, which doesn't support \"docker exec\".");
+        } else if (!isRunning(containerInfo)) {
+            throw new IllegalStateException("execInContainer can only be used while the Container is running");
+        } else {
+            String containerId = containerInfo.getId();
+            ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId)
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
+                    .withCmd(cmd)
+                    .withUser("root")
+                    .exec();
+            ToStringConsumer stdoutConsumer = new ToStringConsumer();
+            ToStringConsumer stderrConsumer = new ToStringConsumer();
+            try (FrameConsumerResultCallback callback = new FrameConsumerResultCallback()) {
+                callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
+                callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
+                dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(callback).awaitCompletion();
+            }
+            Long exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+            String stdout = stdoutConsumer.toString(StandardCharsets.UTF_8);
+            String stderr = stderrConsumer.toString(StandardCharsets.UTF_8);
+            return new ExecResult(exitCode, stdout, stderr);
+        }
+    }
+
+    private static boolean isRunning(InspectContainerResponse containerInfo) {
+        try {
+            return containerInfo != null && containerInfo.getState().getRunning();
+        } catch (DockerException var2) {
+            return false;
         }
     }
 }

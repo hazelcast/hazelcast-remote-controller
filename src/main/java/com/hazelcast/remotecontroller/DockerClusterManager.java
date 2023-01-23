@@ -3,6 +3,7 @@ package com.hazelcast.remotecontroller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,7 +34,12 @@ public class DockerClusterManager {
             LOG.error(log);
             throw new ServerException(log);
         }
-        return hzDockerCluster.createDockerMember();
+        try {
+            return hzDockerCluster.createDockerMember();
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new ServerException(e.getMessage());
+        }
     }
 
     public boolean shutdownMember(String dockerClusterId, String containerId) {
