@@ -2,7 +2,6 @@ package com.hazelcast.remotecontroller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
@@ -11,8 +10,11 @@ import org.testcontainers.utility.MountableFile;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,11 +26,15 @@ public class HzDockerCluster {
     private final String xmlConfigPath;
     private final Network network;
     private final ConcurrentHashMap<String, GenericContainer> containers = new ConcurrentHashMap<>();
+    // Holds the firewall rules that is applied via iptables to split the brain. The key is the container id and value is the
+    // list of blocked ips for input for that container
+    private final Map<String, List<String>> blockRulesOfContainers;
 
     public HzDockerCluster(String dockerImageString, String xmlConfigPath) {
         this.dockerImageString = dockerImageString;
         this.xmlConfigPath = xmlConfigPath;
         this.network = Network.newNetwork();
+        this.blockRulesOfContainers = new HashMap<>();
     }
 
     public String getClusterId() {
@@ -59,7 +65,7 @@ public class HzDockerCluster {
         try {
             container.start();
         } catch (Exception e) {
-            LOG.warn("Could not start container: ", e);
+            LOG.error("Could not start container: ", e);
             throw e;
         }
         if (!container.isRunning()) {
@@ -77,7 +83,7 @@ public class HzDockerCluster {
     public boolean stopAndRemoveContainerById(String containerId) {
         GenericContainer container = this.containers.get(containerId);
         if (container == null) {
-            LOG.info("Container does not exist with id: " + containerId);
+            LOG.warn("Container does not exist with id: " + containerId);
             return false;
         }
 
@@ -96,52 +102,39 @@ public class HzDockerCluster {
         if (!allMembersAreInCluster) {
             return false;
         }
+
         try {
-            disconnectAllContainersFromClusterNetwork();
+            splitContainersAsBrains(brain1, brain2);
         } catch (Exception e) {
-            LOG.error("Could not disconnect all containers from the cluster network during split brain attempt", e);
+            LOG.error("Could not split brains", e);
             return false;
         }
-        try {
-            Network brain1Network = Network.newNetwork();
-            Network brain2Network = Network.newNetwork();
-
-            LOG.warn(brain1Network.getId());
-            LOG.warn(brain2Network.getId());
-
-            for (DockerMember member : brain1) {
-                GenericContainer container = this.containers.get(member.getContainerId());
-                connectContainerToNetwork(container.getContainerId(), brain1Network.getId());
-                container.setNetwork(brain1Network);
-            }
-
-            for (DockerMember member : brain2) {
-                GenericContainer container = this.containers.get(member.getContainerId());
-                connectContainerToNetwork(container.getContainerId(), brain2Network.getId());
-                container.setNetwork(brain2Network);
-            }
-        } catch (Exception e) {
-            LOG.error("Could not connect containers to the brain networks during split brain attempt", e);
-            return false;
-        }
-
         return true;
     }
 
-    public boolean mergeCluster() {
+    private void splitContainersAsBrains(List<DockerMember> brain1, List<DockerMember> brain2) throws IOException, InterruptedException {
+        for (DockerMember member : brain1) {
+            GenericContainer container = this.containers.get(member.getContainerId());
+            blockInputFromContainers(container, brain2);
+        }
+        for (DockerMember member : brain2) {
+            GenericContainer container = this.containers.get(member.getContainerId());
+            blockInputFromContainers(container, brain1);
+        }
+    }
+
+    public boolean mergeBrains() {
         try {
-            disconnectAllContainersFromTheirNetworks();
+            for (Map.Entry<String, List<String>> entry : this.blockRulesOfContainers.entrySet()) {
+                String containerId = entry.getKey();
+                List<String> blockedIps = entry.getValue();
+                unblockInputFromContainers(containerId, blockedIps);
+            }
+            return true;
         } catch (Exception e) {
-            LOG.error("Could not disconnect all containers from their network during merge cluster", e);
+            LOG.error("Could not merge brains", e);
             return false;
         }
-        try {
-            connectAllContainersToClusterNetwork();
-        } catch (Exception e) {
-            LOG.error("Could not connect containers to the cluster network during merge cluster", e);
-            return false;
-        }
-        return true;
     }
 
     public void shutdown() throws IOException {
@@ -167,42 +160,27 @@ public class HzDockerCluster {
         return true;
     }
 
-    private void disconnectAllContainersFromClusterNetwork() {
-        for (GenericContainer container : this.containers.values()) {
-            disconnectContainerFromNetwork(container.getContainerId(), this.network.getId(), true);
+    private void blockInputFromContainers(GenericContainer containerToBeAffected, List<DockerMember> containers) throws IOException, InterruptedException {
+        for (DockerMember member : containers) {
+            containerToBeAffected.execInContainer(String.format("sudo iptables -A INPUT -s %s -j DROP", member.getHost()));
+            addToBlockRule(containerToBeAffected.getContainerId(), member.getHost());
         }
     }
 
-    private void connectAllContainersToClusterNetwork() {
-        for (GenericContainer container : this.containers.values()) {
-            connectContainerToNetwork(container.getContainerId(), this.network.getId());
-            container.setNetwork(this.network);
+    private void addToBlockRule(String containerId, String blockedIp) {
+        if (blockRulesOfContainers.containsKey(containerId)) {
+            blockRulesOfContainers.get(containerId).add(blockedIp);
+        } else {
+            List<String> blockedIps = new ArrayList<>();
+            blockedIps.add(blockedIp);
+            blockRulesOfContainers.put(containerId, blockedIps);
         }
     }
 
-    private void disconnectAllContainersFromTheirNetworks() {
-        for (GenericContainer container : this.containers.values()) {
-            Network network = container.getNetwork();
-            LOG.warn(network.getId());
-            if (network == null) {
-                throw new RuntimeException("Container " + container.getContainerId() + " is not connected to a network");
-            }
-            disconnectContainerFromNetwork(container.getContainerId(), network.getId(), true);
+    private void unblockInputFromContainers(String containerId, List<String> blockedIps) throws IOException, InterruptedException {
+        GenericContainer containerToBeAffected = this.containers.get(containerId);
+        for (String ip : blockedIps) {
+            containerToBeAffected.execInContainer(String.format("sudo iptables -D INPUT -s %s -j DROP", ip));
         }
-    }
-
-    private void disconnectContainerFromNetwork(String containerId, String networkId, boolean force) {
-        DockerClientFactory.instance().client().disconnectFromNetworkCmd()
-                .withNetworkId(networkId)
-                .withContainerId(containerId)
-                .withForce(force)
-                .exec();
-    }
-
-    private void connectContainerToNetwork(String containerId, String networkId) {
-        DockerClientFactory.instance().client().connectToNetworkCmd()
-                .withNetworkId(networkId)
-                .withContainerId(containerId)
-                .exec();
     }
 }

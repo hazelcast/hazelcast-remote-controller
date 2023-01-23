@@ -20,7 +20,7 @@ public class DockerClusterManager {
             this.clusterMap.put(hzDockerCluster.getClusterId(), hzDockerCluster);
             return new DockerCluster(hzDockerCluster.getClusterId());
         } catch (Exception e) {
-            LOG.warn(e);
+            LOG.error(e);
             throw new ServerException(e.getMessage());
         }
     }
@@ -30,7 +30,7 @@ public class DockerClusterManager {
         HzDockerCluster hzDockerCluster = clusterMap.get(clusterId);
         if (hzDockerCluster == null) {
             String log = "Cannot find docker cluster with id:" + clusterId;
-            LOG.info(log);
+            LOG.error(log);
             throw new ServerException(log);
         }
         return hzDockerCluster.createDockerMember();
@@ -40,7 +40,7 @@ public class DockerClusterManager {
         LOG.info("Shutting down the member with container id " + containerId + " on docker cluster : " + dockerClusterId);
         HzDockerCluster hzDockerCluster = this.clusterMap.get(dockerClusterId);
         if (hzDockerCluster == null) {
-            LOG.info("Docker cluster does not exist with id: " + dockerClusterId);
+            LOG.warn("Docker cluster does not exist with id: " + dockerClusterId);
             return false;
         }
         return hzDockerCluster.stopAndRemoveContainerById(containerId);
@@ -49,14 +49,14 @@ public class DockerClusterManager {
     public boolean shutdownCluster(String clusterId) {
         HzDockerCluster hzCluster = this.clusterMap.get(clusterId);
         if (hzCluster == null) {
-            LOG.info("Docker cluster does not exist with id: " + clusterId);
+            LOG.warn("Docker cluster does not exist with id: " + clusterId);
             return false;
         }
         LOG.info("Shutting down the docker cluster : " + clusterId);
         try {
             hzCluster.shutdown();
         } catch (Exception e) {
-            LOG.info("Exception during cluster shutdown: ", e);
+            LOG.error("Exception during cluster shutdown: ", e);
             return false;
         }
         this.clusterMap.remove(hzCluster.getClusterId());
@@ -66,7 +66,7 @@ public class DockerClusterManager {
     public boolean splitClusterAs(String dockerClusterId, List<DockerMember> brain1, List<DockerMember> brain2) {
         HzDockerCluster hzCluster = this.clusterMap.get(dockerClusterId);
         if (hzCluster == null) {
-            LOG.info("Docker cluster does not exist with id: " + dockerClusterId);
+            LOG.warn("Docker cluster does not exist with id: " + dockerClusterId);
             return false;
         }
         LOG.info("Splitting the docker cluster : " + dockerClusterId);
@@ -76,11 +76,11 @@ public class DockerClusterManager {
     public boolean mergeCluster(String dockerClusterId) {
         HzDockerCluster hzCluster = this.clusterMap.get(dockerClusterId);
         if (hzCluster == null) {
-            LOG.info("Docker cluster does not exist with id: " + dockerClusterId);
+            LOG.warn("Docker cluster does not exist with id: " + dockerClusterId);
             return false;
         }
 
         LOG.info("Merging the docker cluster : " + dockerClusterId);
-        return hzCluster.mergeCluster();
+        return hzCluster.mergeBrains();
     }
 }
