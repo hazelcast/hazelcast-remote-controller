@@ -30,6 +30,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 
+enum PackageManager {
+    MICRODNF,
+    APT,
+    APK
+}
+
 public class HzDockerCluster {
     private static class ExecResult {
         public final Long exitCode;
@@ -51,25 +57,19 @@ public class HzDockerCluster {
     private final String clusterId = UUID.randomUUID().toString();
     private final String dockerImageString;
     private final String xmlConfigPath;
-    private final Network network;
+    private final Network network = Network.newNetwork();
     private final ConcurrentHashMap<String, GenericContainer> containers = new ConcurrentHashMap<>();
     // Holds the firewall rules that is applied via iptables to split the brain. The key is the container id and value is the
     // list of blocked ips for input for that container
-    private final Map<String, List<String>> blockRulesOfContainers;
+    private final ConcurrentHashMap<String, List<String>> blockRulesOfContainers = new ConcurrentHashMap<>();
 
     public HzDockerCluster(String dockerImageString, String xmlConfigPath) {
         this.dockerImageString = dockerImageString;
         this.xmlConfigPath = xmlConfigPath;
-        this.network = Network.newNetwork();
-        this.blockRulesOfContainers = new HashMap<>();
     }
 
     public String getClusterId() {
         return clusterId;
-    }
-
-    public void addContainer(String containerId, GenericContainer container) {
-        this.containers.put(containerId, container);
     }
 
     public DockerMember createDockerMember() {
@@ -102,26 +102,60 @@ public class HzDockerCluster {
         String host = container.getHost();
         String containerId = container.getContainerId();
 
-        this.addContainer(container.getContainerId(), container);
-        tryInstallingIptables(container);
+        this.containers.put(containerId, container);
+        try {
+            tryInstallingIptables(dockerImageString, container);
+        } catch (Exception e) {
+            if (!this.stopAndRemoveContainerById(containerId)) {
+                LOG.error("Could not stop and remove container with id: "
+                        + containerId + " after not being able install iptables in it.");
+            }
+            throw e;
+        }
         return new DockerMember(containerId, host, port);
     }
 
-    private static void tryInstallingIptables(GenericContainer container) {
+    private static void tryInstallingIptables(String dockerImageString, GenericContainer container) {
         LOG.info("Installing iptables in the container.");
-        boolean installed = tryInstallingIptablesWithApk(container);
-        if (!installed) {
-            boolean installedWithApt = tryInstallingIptablesWithAptGet(container);
-            if(!installedWithApt) {
-                throw new RuntimeException("Could not install iptables in the container.");
+        PackageManager[] packageManagers;
+        if (dockerImageString.contains("enterprise")) {
+            packageManagers = new PackageManager[]{PackageManager.MICRODNF, PackageManager.APT, PackageManager.APK};
+        } else {
+            packageManagers = new PackageManager[]{PackageManager.APK, PackageManager.APT, PackageManager.MICRODNF};
+        }
+        if (!tryInstallingIpTablesWithPackageManagers(container, packageManagers)) {
+            throw new RuntimeException("Could not install iptables in the container.");
+        }
+    }
+
+    private static boolean tryInstallingIpTablesWithPackageManagers(GenericContainer container, PackageManager[] packageManagers) {
+        for (PackageManager packageManager : packageManagers) {
+            switch (packageManager) {
+                case MICRODNF:
+                    if (tryInstallingIptablesWithMicroDnf(container)) {
+                        return true;
+                    }
+                    break;
+                case APT:
+                    if (tryInstallingIptablesWithAptGet(container)) {
+                        return true;
+                    }
+                    break;
+                case APK:
+                    if (tryInstallingIptablesWithApk(container)) {
+                        return true;
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown package manager: " + packageManager);
             }
         }
+        return false;
     }
 
     private static boolean tryInstallingIptablesWithApk(GenericContainer container) {
         try {
-            execAsRootAndThrowOnError(container, "apk", "update");
-            execAsRootAndThrowOnError(container, "apk", "add", "iptables");
+            execAsRootAndThrowOnError(container, "sh", "-c", "apk update && apt add iptables");
             return true;
         } catch (Throwable e) {
             LOG.error(e);
@@ -131,10 +165,20 @@ public class HzDockerCluster {
 
     private static boolean tryInstallingIptablesWithAptGet(GenericContainer container) {
         try {
-            execAsRootAndThrowOnError(container, "apt-get", "update");
-            execAsRootAndThrowOnError(container, "apt-get", "install", "iptables");
+            execAsRootAndThrowOnError(container, "sh", "-c", "apt-get update && apt-get install iptables");
             return true;
         } catch (Throwable e) {
+            LOG.error(e);
+            return false;
+        }
+    }
+
+    private static boolean tryInstallingIptablesWithMicroDnf(GenericContainer container) {
+        try {
+            execAsRootAndThrowOnError(container, "sh", "-c", "microdnf update && microdnf install iptables");
+            return true;
+        } catch (Throwable e) {
+            LOG.error(e);
             return false;
         }
     }
@@ -196,14 +240,8 @@ public class HzDockerCluster {
         }
     }
 
-    public void shutdown() throws IOException {
-        Iterator<GenericContainer> iterator = this.containers.values().iterator();
-        while (iterator.hasNext()) {
-            GenericContainer container = iterator.next();
-            String str = container.getLogs();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(container.getContainerId() + ".logs", true));
-            writer.append(str);
-            writer.close();
+    public void shutdown() {
+        for (GenericContainer container : this.containers.values()) {
             container.stop();
         }
         this.containers.clear();

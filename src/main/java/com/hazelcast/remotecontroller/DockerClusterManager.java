@@ -3,7 +3,6 @@ package com.hazelcast.remotecontroller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,9 +10,6 @@ public class DockerClusterManager {
 
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private final ConcurrentHashMap<String, HzDockerCluster> clusterMap = new ConcurrentHashMap<>();
-
-    public DockerClusterManager() {
-    }
 
     public DockerCluster createCluster(String dockerImageString, String xmlconfig) throws ServerException {
         try {
