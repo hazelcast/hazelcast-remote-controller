@@ -83,8 +83,8 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public DockerCluster createDockerCluster(String dockerImageString, String xmlconfig) throws TException {
-        return dockerClusterManager.createCluster(dockerImageString, xmlconfig);
+    public DockerCluster createDockerCluster(String dockerImageString, String xmlconfig, String hazelcastEnterpriseLicenseKey) throws TException {
+        return dockerClusterManager.createCluster(dockerImageString, xmlconfig, hazelcastEnterpriseLicenseKey);
     }
 
     @Override

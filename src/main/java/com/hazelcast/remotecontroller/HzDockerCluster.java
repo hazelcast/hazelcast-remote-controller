@@ -12,21 +12,23 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.FrameConsumerResultCallback;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.ToStringConsumer;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
+import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.TestEnvironment;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -63,9 +65,16 @@ public class HzDockerCluster {
     // list of blocked ips for input for that container
     private final ConcurrentHashMap<String, List<String>> blockRulesOfContainers = new ConcurrentHashMap<>();
 
-    public HzDockerCluster(String dockerImageString, String xmlConfigPath) {
+    private final String hazelcastEnterpriseLicenseKey;
+
+    public HzDockerCluster(String dockerImageString, String xmlConfigPath, String hazelcastEnterpriseLicenseKey) {
         this.dockerImageString = dockerImageString;
         this.xmlConfigPath = xmlConfigPath;
+        if (hazelcastEnterpriseLicenseKey == null) {
+            this.hazelcastEnterpriseLicenseKey = "";
+        } else {
+            this.hazelcastEnterpriseLicenseKey = hazelcastEnterpriseLicenseKey;
+        }
     }
 
     public String getClusterId() {
@@ -73,12 +82,28 @@ public class HzDockerCluster {
     }
 
     public DockerMember createDockerMember() {
+        boolean isEnterprise = dockerImageString.contains("enterprise");
+
         GenericContainer container;
+        if (isEnterprise) {
+            // nc is needed for testcontainers internal code, see InternalCommandPortListeningCheck
+            container = new GenericContainer(new ImageFromDockerfile()
+                            .withDockerfileFromBuilder(builder ->
+                                    builder.from(dockerImageString)
+                                            .env("HZ_LICENSEKEY", hazelcastEnterpriseLicenseKey)
+                                            // Hz EE image uses hazelcast user which cannot install anything, we need to switch
+                                            // to root and switch back to hazelcast user
+                                            .user("root")
+                                            .run("microdnf install nc")
+                                            .user("hazelcast")
+                                            .build()));
+        } else {
+            container = new GenericContainer(DockerImageName.parse(dockerImageString));
+        }
         if (xmlConfigPath != null) {
             MountableFile mountableFile = MountableFile.forHostPath(xmlConfigPath);
             // This port is from the container's point of view, actual port on the host is mapped by testcontainers randomly
-            container = new GenericContainer(DockerImageName.parse(dockerImageString))
-                    .withEnv("JAVA_OPTS", "-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.xml")
+            container.withEnv("JAVA_OPTS", "-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.xml")
                     .withEnv("HZ_PHONE_HOME_ENABLED", "false")
                     .withCopyFileToContainer(mountableFile, "/opt/hazelcast/config_ext/hazelcast.xml")
                     .withNetwork(network)
@@ -86,13 +111,14 @@ public class HzDockerCluster {
                     .withPrivilegedMode(true)
                     .withExposedPorts(5701);
         } else {
-            container = new GenericContainer(DockerImageName.parse(dockerImageString))
-                    .withEnv("HZ_PHONE_HOME_ENABLED", "false")
+            container.withEnv("HZ_PHONE_HOME_ENABLED", "false")
                     .withNetwork(network)
                     // For iptables to work, (at least for Mac) we need to run the container in privileged mode
                     .withPrivilegedMode(true)
                     .withExposedPorts(5701);
         }
+        PackageManager[] packageManagers = getPackageManagersToTry(dockerImageString);
+
         container.start();
         if (!container.isRunning()) {
             throw new RuntimeException("Container could not be started");
@@ -104,7 +130,7 @@ public class HzDockerCluster {
 
         this.containers.put(containerId, container);
         try {
-            tryInstallingIptables(dockerImageString, container);
+            tryInstallingIptables(container, packageManagers);
         } catch (Exception e) {
             if (!this.stopAndRemoveContainerById(containerId)) {
                 LOG.error("Could not stop and remove container with id: "
@@ -115,34 +141,38 @@ public class HzDockerCluster {
         return new DockerMember(containerId, host, port);
     }
 
-    private static void tryInstallingIptables(String dockerImageString, GenericContainer container) {
-        LOG.info("Installing iptables in the container.");
+    private static PackageManager[] getPackageManagersToTry(String dockerImageString) {
         PackageManager[] packageManagers;
         if (dockerImageString.contains("enterprise")) {
             packageManagers = new PackageManager[]{PackageManager.MICRODNF, PackageManager.APT, PackageManager.APK};
         } else {
             packageManagers = new PackageManager[]{PackageManager.APK, PackageManager.APT, PackageManager.MICRODNF};
         }
-        if (!tryInstallingIpTablesWithPackageManagers(container, packageManagers)) {
+        return packageManagers;
+    }
+
+    private static void tryInstallingIptables(GenericContainer container, PackageManager[] packageManagers) {
+        LOG.info("Installing iptables in the container.");
+        if (!tryInstallingWithPackageManagers("iptables", container, packageManagers)) {
             throw new RuntimeException("Could not install iptables in the container.");
         }
     }
 
-    private static boolean tryInstallingIpTablesWithPackageManagers(GenericContainer container, PackageManager[] packageManagers) {
+    private static boolean tryInstallingWithPackageManagers(String packageName, GenericContainer container, PackageManager[] packageManagers) {
         for (PackageManager packageManager : packageManagers) {
             switch (packageManager) {
                 case MICRODNF:
-                    if (tryInstallingIptablesWithMicroDnf(container)) {
+                    if (tryInstallingIptablesWithMicroDnf(container, packageName)) {
                         return true;
                     }
                     break;
                 case APT:
-                    if (tryInstallingIptablesWithAptGet(container)) {
+                    if (tryInstallingIptablesWithAptGet(container, packageName)) {
                         return true;
                     }
                     break;
                 case APK:
-                    if (tryInstallingIptablesWithApk(container)) {
+                    if (tryInstallingIptablesWithApk(container, packageName)) {
                         return true;
                     }
                     break;
@@ -153,9 +183,10 @@ public class HzDockerCluster {
         return false;
     }
 
-    private static boolean tryInstallingIptablesWithApk(GenericContainer container) {
+    private static boolean tryInstallingIptablesWithApk(GenericContainer container, String packageName) {
         try {
-            execAsRootAndThrowOnError(container, "sh", "-c", "apk update && apk add iptables");
+            execAsRootAndThrowOnError(container, "sh", "-c",
+                    String.format("apk update && apk add %s", packageName));
             return true;
         } catch (Throwable e) {
             LOG.error(e);
@@ -163,9 +194,11 @@ public class HzDockerCluster {
         }
     }
 
-    private static boolean tryInstallingIptablesWithAptGet(GenericContainer container) {
+
+    private static boolean tryInstallingIptablesWithAptGet(GenericContainer container, String packageName) {
         try {
-            execAsRootAndThrowOnError(container, "sh", "-c", "apt-get update && apt-get install iptables");
+            execAsRootAndThrowOnError(container, "sh", "-c",
+                    String.format("apt-get update && apt-get install %s", packageName));
             return true;
         } catch (Throwable e) {
             LOG.error(e);
@@ -173,9 +206,10 @@ public class HzDockerCluster {
         }
     }
 
-    private static boolean tryInstallingIptablesWithMicroDnf(GenericContainer container) {
+    private static boolean tryInstallingIptablesWithMicroDnf(GenericContainer container, String packageName) {
         try {
-            execAsRootAndThrowOnError(container, "sh", "-c", "microdnf update && microdnf install iptables");
+            execAsRootAndThrowOnError(container, "sh", "-c",
+                    String.format("microdnf update && microdnf install %s", packageName));
             return true;
         } catch (Throwable e) {
             LOG.error(e);

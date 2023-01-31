@@ -11,9 +11,9 @@ public class DockerClusterManager {
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private final ConcurrentHashMap<String, HzDockerCluster> clusterMap = new ConcurrentHashMap<>();
 
-    public DockerCluster createCluster(String dockerImageString, String xmlconfig) throws ServerException {
+    public DockerCluster createCluster(String dockerImageString, String xmlconfig, String hazelcastEnterpriseLicenseKey) throws ServerException {
         try {
-            HzDockerCluster hzDockerCluster = new HzDockerCluster(dockerImageString, xmlconfig);
+            HzDockerCluster hzDockerCluster = new HzDockerCluster(dockerImageString, xmlconfig, hazelcastEnterpriseLicenseKey);
             this.clusterMap.put(hzDockerCluster.getClusterId(), hzDockerCluster);
             return new DockerCluster(hzDockerCluster.getClusterId());
         } catch (Exception e) {

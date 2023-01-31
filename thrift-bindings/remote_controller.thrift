@@ -73,7 +73,7 @@ service RemoteController {
     bool resumeMember(1:string clusterId, 2:string memberId);
 
     // Docker related methods follow
-    DockerCluster createDockerCluster(1:string dockerImageString, 2:string xmlconfigPath) throws (1:ServerException serverException);
+    DockerCluster createDockerCluster(1:string dockerImageString, 2:string xmlconfigPath, 3:string hazelcastEnterpriseLicenseKey) throws (1:ServerException serverException);
     bool shutdownDockerCluster(1:string dockerClusterId);
 
     DockerMember startDockerMember(1:string dockerClusterId) throws (1:ServerException serverException);
