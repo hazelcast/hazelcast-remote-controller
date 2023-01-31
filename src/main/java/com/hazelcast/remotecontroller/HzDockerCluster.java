@@ -155,7 +155,7 @@ public class HzDockerCluster {
 
     private static boolean tryInstallingIptablesWithApk(GenericContainer container) {
         try {
-            execAsRootAndThrowOnError(container, "sh", "-c", "apk update && apt add iptables");
+            execAsRootAndThrowOnError(container, "sh", "-c", "apk update && apk add iptables");
             return true;
         } catch (Throwable e) {
             LOG.error(e);
