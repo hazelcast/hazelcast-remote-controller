@@ -27,7 +27,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class CloudManager {
-    private static final OkHttpClient CLIENT = new OkHttpClient();
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 10;
@@ -37,6 +36,9 @@ public class CloudManager {
     private static final int CLOUD_PROVIDER_REGION_ID = 4; // us-west-2
     private static final String CLUSTER_PLAN = "SERVERLESS";
     private final ObjectMapper mapper = new ObjectMapper();
+    // Make these timeouts pretty long to avoid timeout errors. The dev environment is slow.
+    private static final OkHttpClient client = (new OkHttpClient.Builder())
+            .connectTimeout(2, TimeUnit.MINUTES).readTimeout(2, TimeUnit.MINUTES).build();
     private String baseUrl;
     private String bearerToken;
     private Call call;
@@ -229,7 +231,7 @@ public class CloudManager {
                 reqBuilder.post(RequestBody.create(null, new byte[0]));
             }
             Request request = reqBuilder.build();
-            call = CLIENT.newCall(request);
+            call = client.newCall(request);
             return call.execute();
         } catch (Exception e) {
             Log.warn(maskValueOfToken(e.toString()));
@@ -247,7 +249,7 @@ public class CloudManager {
                     .header("Content-Type", "application/json")
                     .get()
                     .build();
-            call = CLIENT.newCall(request);
+            call = client.newCall(request);
             return call.execute();
         } catch (Exception e) {
             Log.warn(maskValueOfToken(e.toString()));
@@ -265,7 +267,7 @@ public class CloudManager {
                     .header("Content-Type", "application/json")
                     .build();
 
-            call = CLIENT.newCall(request);
+            call = client.newCall(request);
             return call.execute();
         } catch (Exception e) {
             Log.warn(maskValueOfToken(e.toString()));
@@ -286,7 +288,7 @@ public class CloudManager {
                     .get()
                     .header("Authorization", String.format("Bearer %s", bearerToken))
                     .build();
-            call = CLIENT.newCall(request);
+            call = client.newCall(request);
             Response response = call.execute();
             try {
                 ResponseBody responseBody = response.body();
@@ -365,7 +367,7 @@ public class CloudManager {
                     .post(body)
                     .header("Content-Type", "application/json")
                     .build();
-            call = CLIENT.newCall(request);
+            call = client.newCall(request);
             Response response = call.execute();
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
@@ -422,7 +424,7 @@ public class CloudManager {
                 .header("Authorization", String.format("Bearer %s", bearerToken))
                 .build();
 
-        call = CLIENT.newCall(request);
+        call = client.newCall(request);
         Response response = call.execute();
         try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
             ResponseBody responseBody = response.body();
