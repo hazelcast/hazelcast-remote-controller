@@ -121,10 +121,10 @@ public class CloudManager {
         return e + "\n" + Arrays.toString(e.getStackTrace());
     }
 
-    private static void throwIfResponseFailed(Response response, String responseString) throws CloudException {
+    private void throwIfResponseFailed(Response response, String responseString) throws CloudException {
         if (!response.isSuccessful()) {
             String errorString = String.format("Unexpected http code %d Response: %s", response.code(), responseString);
-            LOG.error(errorString);
+            LOG.error(maskValueOfToken(errorString));
             throw new CloudException(errorString);
         }
     }
@@ -206,7 +206,7 @@ public class CloudManager {
                 }
                 String responseString = responseBody.string();
                 throwIfResponseFailed(res, responseString);
-                LOG.info(responseString);
+                LOG.info(maskValueOfToken(responseString));
                 waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 LOG.info(String.format("Cluster with id %s is deleted", clusterId));
             }
@@ -232,7 +232,7 @@ public class CloudManager {
             call = CLIENT.newCall(request);
             return call.execute();
         } catch (Exception e) {
-            Log.warn(e.toString());
+            Log.warn(maskValueOfToken(e.toString()));
             throw new CloudException(String.format("Exception while sending a post request to %s with body %s: \n %s",
                     uri, jsonString, getErrorString(e)));
         }
@@ -250,7 +250,7 @@ public class CloudManager {
             call = CLIENT.newCall(request);
             return call.execute();
         } catch (Exception e) {
-            Log.warn(e.toString());
+            Log.warn(maskValueOfToken(e.toString()));
             throw new CloudException(String.format("Exception while sending a get request to %s: \n %s", uri, getErrorString(e)));
         }
     }
@@ -268,7 +268,7 @@ public class CloudManager {
             call = CLIENT.newCall(request);
             return call.execute();
         } catch (Exception e) {
-            Log.warn(e.toString());
+            Log.warn(maskValueOfToken(e.toString()));
             throw new CloudException(String.format("Exception while sending a delete request to %s: \n %s", uri, getErrorString(e)));
         }
     }
@@ -300,7 +300,7 @@ public class CloudManager {
                 throw new CloudException("Body is null for tlsPassword. Rc error is: " + getErrorString(e));
             }
         } catch (Exception e) {
-            LOG.warn(e);
+            LOG.warn(maskValueOfToken(e.toString()));
             throw new CloudException(String.format("Get tls password with cluster id %s is failed, Rc error is: %s", clusterId, getErrorString(e)));
         }
     }
@@ -317,7 +317,7 @@ public class CloudManager {
                     }
                     String responseString = responseBody.string();
                     throwIfResponseFailed(response, responseString);
-                    LOG.info(responseString);
+                    LOG.info(maskValueOfToken(responseString));
                     currentState = mapper.readTree(responseString).get("state").asText();
                     if (currentState.equalsIgnoreCase(expectedState)) {
                         return;
@@ -342,7 +342,7 @@ public class CloudManager {
         long startTime = System.currentTimeMillis();
         while (true) {
             try {
-                // Don't setup tls, we just want to check if cluster is deleted
+                // Don't set up tls, we just want to check if cluster is deleted
                 getCloudCluster(clusterId, false);
             } catch (CloudException e) {
                 // Cluster is deleted
@@ -359,7 +359,6 @@ public class CloudManager {
     private String getBearerToken(String apiKey, String apiSecret) throws CloudException {
         try {
             String query = String.format("{ \"apiKey\": \"%s\", \"apiSecret\": \"%s\" }", apiKey, apiSecret);
-            LOG.info(String.format("Sending query %s for getting bearer token", query));
             RequestBody body = RequestBody.create(JSON, query);
             Request request = new Request.Builder()
                     .url(baseUrl + "/customers/api/login")
@@ -400,14 +399,14 @@ public class CloudManager {
             {
                 createFolderAndDownloadCertificates(pathClusterId, clusterId);
             }
-            return Paths.get(pathClusterId.toString(), "certificates").toString() + File.separator;
+            return Paths.get(pathClusterId.toString(), "certificates") + File.separator;
         } catch (Exception e)
         {
             throw new CloudException(String.format("Problem occurred during certificates download for cluster with id %s, Rc stack trace is: %s", clusterId, getErrorString(e)));
         }
     }
 
-    private void createFolderAndDownloadCertificates(Path pathClusterId, String clusterId) throws IOException {
+    private void createFolderAndDownloadCertificates(Path pathClusterId, String clusterId) throws IOException, CloudException {
         Path destination;
         Files.createDirectories(pathClusterId);
         Path pathResponseZip = Paths.get(pathClusterId.toString(), "certificates.zip");
@@ -426,11 +425,20 @@ public class CloudManager {
         call = CLIENT.newCall(request);
         Response response = call.execute();
         try (FileOutputStream stream = new FileOutputStream(pathResponseZip.toString())) {
-            stream.write(response.body().bytes());
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new CloudException(String.format("Response body is null while getting cluster certificates: %s", response));
+            }
+            stream.write(responseBody.bytes());
         }
 
-        ZipFile zipFile = new ZipFile(pathResponseZip.toString());
-        zipFile.extractAll(destination.toString());
-        new File(pathResponseZip.toString()).delete();
+        try (ZipFile zipFile = new ZipFile(pathResponseZip.toString())) {
+            zipFile.extractAll(destination.toString());
+        }
+
+        boolean deleted = new File(pathResponseZip.toString()).delete();
+        if (!deleted) {
+            LOG.warn(String.format("Could not delete file %s", pathResponseZip));
+        }
     }
 }
