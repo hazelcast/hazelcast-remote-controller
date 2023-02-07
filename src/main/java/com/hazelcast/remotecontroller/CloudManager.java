@@ -98,7 +98,7 @@ public class CloudManager {
                     hazelcastVersion,
                     isTlsEnabled);
 
-            LOG.info(String.format("Request query: %s", jsonString));
+            // LOG.info(String.format("Request query: %s", jsonString));
             try (Response response = sendPostRequest("/cluster", jsonString)){
                 ResponseBody responseBody = response.body();
                 if (responseBody == null) {
@@ -106,7 +106,7 @@ public class CloudManager {
                 }
                 String responseString = responseBody.string();
                 throwIfResponseFailed(response, responseString);
-                LOG.info(maskValueOfToken(responseString));
+                // LOG.info(maskValueOfToken(responseString));
                 clusterId = mapper.readTree(responseString).get("id").asText();
                 waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 return getCloudCluster(clusterId);
@@ -142,7 +142,7 @@ public class CloudManager {
                 }
                 String responseString = responseBody.string();
                 throwIfResponseFailed(res, responseString);
-                LOG.info(maskValueOfToken(responseString));
+                // LOG.info(maskValueOfToken(responseString));
                 JsonNode rootNode = mapper.readTree(responseString);
                 if (rootNode.asText().equalsIgnoreCase("null")) {
                     throw new CloudException(String.format("Cluster with id %s is not found", clusterId));
@@ -170,7 +170,7 @@ public class CloudManager {
                 }
                 String responseString = responseBody.string();
                 throwIfResponseFailed(res, responseString);
-                LOG.info(maskValueOfToken(responseString));
+                // LOG.info(maskValueOfToken(responseString));
                 waitForStateOfCluster(clusterId, "STOPPED", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 return getCloudCluster(clusterId);
             }
@@ -188,7 +188,7 @@ public class CloudManager {
                 }
                 String responseString = responseBody.string();
                 throwIfResponseFailed(res, responseString);
-                LOG.info(maskValueOfToken(responseString));
+                // LOG.info(maskValueOfToken(responseString));
                 waitForStateOfCluster(clusterId, "RUNNING", TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 return getCloudCluster(clusterId);
             }
@@ -206,7 +206,7 @@ public class CloudManager {
                 }
                 String responseString = responseBody.string();
                 throwIfResponseFailed(res, responseString);
-                LOG.info(maskValueOfToken(responseString));
+                // LOG.info(maskValueOfToken(responseString));
                 waitForDeletedCluster(clusterId, TimeUnit.MINUTES.toMillis(TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES));
                 LOG.info(String.format("Cluster with id %s is deleted", clusterId));
             }
@@ -317,7 +317,7 @@ public class CloudManager {
                     }
                     String responseString = responseBody.string();
                     throwIfResponseFailed(response, responseString);
-                    LOG.info(maskValueOfToken(responseString));
+                    // LOG.info(maskValueOfToken(responseString));
                     currentState = mapper.readTree(responseString).get("state").asText();
                     if (currentState.equalsIgnoreCase(expectedState)) {
                         return;
@@ -373,7 +373,7 @@ public class CloudManager {
             }
             String responseString = responseBody.string();
             throwIfResponseFailed(response, responseString);
-            LOG.info(maskValueOfToken(responseString));
+            // LOG.info(maskValueOfToken(responseString));
             return mapper.readTree(responseString).get("token").asText();
         } catch (Exception e) {
             throw new CloudException("Get bearer token is failed. " + getErrorString(e));
@@ -438,7 +438,7 @@ public class CloudManager {
 
         boolean deleted = new File(pathResponseZip.toString()).delete();
         if (!deleted) {
-            LOG.warn(String.format("Could not delete file %s", pathResponseZip));
+            LOG.warn(String.format("Could not delete certificate zip file %s", pathResponseZip));
         }
     }
 }
