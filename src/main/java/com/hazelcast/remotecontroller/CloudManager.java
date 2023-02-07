@@ -30,7 +30,7 @@ public class CloudManager {
     private static final OkHttpClient CLIENT = new OkHttpClient();
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 5;
+    private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 10;
     private static final int RETRY_TIME_IN_SECOND = 10;
     private static final int CLUSTER_TYPE_ID = 5; // Serverless cluster
     private static final int CLOUD_PROVIDER_ID = 1; // aws
