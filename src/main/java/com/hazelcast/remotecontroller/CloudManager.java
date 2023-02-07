@@ -386,13 +386,13 @@ public class CloudManager {
         return json.replaceAll("\"token\"\\s*:\\s*\"(.*)\"", "\"token\":\"******\"");
     }
 
-    // It creates a folder with name clusterId under /home/user/
+    // It creates a folder with name clusterId under the directory jvm invoked.
     // Then it downloads the certificates for the cluster and put them in the created folder
     private String downloadCertificatesAndGetPath(String clusterId) throws CloudException {
         try
         {
-            String userHome = System.getProperty("user.home");
-            Path pathClusterId = Paths.get(userHome, clusterId);
+            String currentDirectory = System.getProperty("user.dir");
+            Path pathClusterId = Paths.get(currentDirectory, clusterId);
 
             // If folder with clusterId is there then certificates are already downloaded
             if (!Files.exists(pathClusterId))
