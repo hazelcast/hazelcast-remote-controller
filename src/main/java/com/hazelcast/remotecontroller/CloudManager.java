@@ -36,9 +36,10 @@ public class CloudManager {
     private static final int CLOUD_PROVIDER_REGION_ID = 4; // us-west-2
     private static final String CLUSTER_PLAN = "SERVERLESS";
     private final ObjectMapper mapper = new ObjectMapper();
-    // Make these timeouts pretty long to avoid timeout errors. The dev environment is slow.
+    // Remove socket timeouts for http. The dev environment and gh actions are slow things.
     private static final OkHttpClient client = (new OkHttpClient.Builder())
-            .connectTimeout(2, TimeUnit.MINUTES).readTimeout(2, TimeUnit.MINUTES).build();
+            .connectTimeout(0, TimeUnit.MILLISECONDS).readTimeout(0, TimeUnit.MILLISECONDS)
+            .writeTimeout(0, TimeUnit.MILLISECONDS).build();
     private String baseUrl;
     private String bearerToken;
     private Call call;
