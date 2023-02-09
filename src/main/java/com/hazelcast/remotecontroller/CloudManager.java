@@ -322,6 +322,7 @@ public class CloudManager {
                     throwIfResponseFailed(response, responseString);
                     // LOG.info(maskValueOfToken(responseString));
                     currentState = mapper.readTree(responseString).get("state").asText();
+                    LOG.warn("Cluster state is expected to be " + expectedState + " and it is " + currentState + "");
                     if (currentState.equalsIgnoreCase(expectedState)) {
                         return;
                     }
