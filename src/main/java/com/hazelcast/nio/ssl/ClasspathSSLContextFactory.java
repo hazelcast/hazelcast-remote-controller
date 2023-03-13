@@ -16,9 +16,6 @@
 
 package com.hazelcast.nio.ssl;
 
-import com.hazelcast.internal.nio.IOUtil;
-import com.hazelcast.spi.annotation.PrivateApi;
-
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -32,7 +29,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Properties;
 
-@PrivateApi
 public class ClasspathSSLContextFactory implements SSLContextFactory {
 
     private static final String JAVA_NET_SSL_PREFIX = "javax.net.ssl.";
@@ -80,11 +76,8 @@ public class ClasspathSSLContextFactory implements SSLContextFactory {
     private void loadKeyStore(KeyStore ks, char[] passPhrase, String resource)
             throws IOException, NoSuchAlgorithmException, CertificateException {
         ClassLoader cl = ClasspathSSLContextFactory.class.getClassLoader();
-        InputStream in = new BufferedInputStream(cl.getResourceAsStream(resource));
-        try {
+        try (InputStream in = new BufferedInputStream(cl.getResourceAsStream(resource))) {
             ks.load(in, passPhrase);
-        } finally {
-            IOUtil.closeResource(in);
         }
     }
 

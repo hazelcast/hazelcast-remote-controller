@@ -15,7 +15,7 @@ struct DockerCluster{
 struct CloudCluster{
     1:string id;
     2:string name;
-    3:string nameForConnect
+    3:string releaseName;
     4:string hazelcastVersion;
     5:bool isTlsEnabled;
     6:string state;
@@ -83,57 +83,48 @@ service RemoteController {
     bool mergeCluster(1:string dockerClusterId);
 
     /**
-     * Reads the environment variables and calls loginToHazelcastCloud() method with these variables.
+     * Reads the environment variables and calls loginToCloud() method with these variables.
      * @throws CloudException
      */
-    void loginToHazelcastCloudUsingEnvironment() throws (1:CloudException cloudException)
+    void loginToCloudUsingEnvironment() throws (1:CloudException cloudException)
 
     /**
-     * Logins the hazelcast cloud, sets the bearer token, uri and baseUrl to HazelcastCloudManager then it will be ready to use cloud API
+     * Logins to the cloud, sets the bearerToken, baseUrl variables in CloudManager to make it ready to use cloud API
      * @throws CloudException
      *
      * @param baseUrl -> Base url of the cloud environment. i.e. https://uat.hazelcast.cloud
      * @param apiKey -> Api key of the hazelcast cloud
      * @param apiSecret -> Api secret of the hazelcast cloud
      */
-    void loginToHazelcastCloud(1:string baseUrl, 2:string apiKey, 3:string apiSecret) throws (1:CloudException cloudException)
+    void loginToCloud(1:string baseUrl, 2:string apiKey, 3:string apiSecret) throws (1:CloudException cloudException)
 
     /**
-     * Creates a standard cluster
+     * Creates a cluster
      * @return CloudCluster
      * @throws CloudException
      *
-     * @param hazelcastVersion
+     * @param hazelcastVersion -> Hazelcast version
      * @param isTlsEnabled -> True if ssl enabled cluster is requested, otherwise false.
      */
-    CloudCluster createHazelcastCloudStandardCluster(1:string hazelcastVersion, 2:bool isTlsEnabled) throws (1:CloudException cloudException)
-
-    /**
-     * Setting member count of the cluster
-     * @throws CloudException
-     *
-     * @param cloudClusterId
-     * @param totalMemberCount -> Total member count of the cluster
-     */
-    void setHazelcastCloudClusterMemberCount(1:string cloudClusterId, 2:i32 totalMemberCount) throws (1:CloudException cloudException)
+    CloudCluster createCloudCluster(1:string hazelcastVersion, 2:bool isTlsEnabled) throws (1:CloudException cloudException)
 
     /**
      * Get information of the given cluster
      * @return CloudCluster
      * @throws CloudException
      *
-     * @param cloudClusterId
+     * @param cloudClusterId -> Id of the cluster
      */
-    CloudCluster getHazelcastCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
+    CloudCluster getCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
 
     /**
      * Stops the given cluster
      * @return CloudCluster
      * @throws CloudException
      *
-     * @param cloudClusterId
+     * @param cloudClusterId -> Id of the cluster
      */
-    CloudCluster stopHazelcastCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
+    CloudCluster stopCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
 
     /**
      * Resumes the given cluster
@@ -142,7 +133,7 @@ service RemoteController {
      *
      * @param cloudClusterId
      */
-    CloudCluster resumeHazelcastCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
+    CloudCluster resumeCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
 
     /**
      * Deletes the given cluster
@@ -151,7 +142,7 @@ service RemoteController {
      *
      * @param cloudClusterId
      */
-    void deleteHazelcastCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
+    void deleteCloudCluster(1:string cloudClusterId) throws (1:CloudException cloudException)
 
     Response executeOnController(1:string clusterId, 2:string script, 3:Lang lang);
 
