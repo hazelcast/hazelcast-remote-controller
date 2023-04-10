@@ -10,6 +10,7 @@ struct Cluster{
 
 struct DockerCluster{
     1:string id;
+    2:string networkId;
 }
 
 struct CloudCluster{
@@ -33,7 +34,6 @@ struct Member{
 struct DockerMember{
     1:string containerId;
     2:string host;
-    3:i32 port;
 }
 
 struct Response{
@@ -79,7 +79,7 @@ service RemoteController {
     DockerMember startDockerMember(1:string dockerClusterId) throws (1:ServerException serverException);
     bool shutdownDockerMember(1:string dockerClusterId, 2:string containerId);
 
-    bool splitClusterAs(1:string dockerClusterId, 2:list<DockerMember> brain1, 3:list<DockerMember> brain2);
+    bool splitClusterAs(1:string dockerClusterId, 2:list<string> brain1, 3:list<string> brain2);
     bool mergeCluster(1:string dockerClusterId);
 
     /**

@@ -12,15 +12,18 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DockerCluster");
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField NETWORK_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("networkId", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new DockerClusterStandardSchemeFactory();
   private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new DockerClusterTupleSchemeFactory();
 
   public @org.apache.thrift.annotation.Nullable java.lang.String id; // required
+  public @org.apache.thrift.annotation.Nullable java.lang.String networkId; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    ID((short)1, "id");
+    ID((short)1, "id"),
+    NETWORK_ID((short)2, "networkId");
 
     private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
@@ -38,6 +41,8 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
       switch(fieldId) {
         case 1: // ID
           return ID;
+        case 2: // NETWORK_ID
+          return NETWORK_ID;
         default:
           return null;
       }
@@ -84,6 +89,8 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
     java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.NETWORK_ID, new org.apache.thrift.meta_data.FieldMetaData("networkId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DockerCluster.class, metaDataMap);
   }
@@ -92,10 +99,12 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
   }
 
   public DockerCluster(
-    java.lang.String id)
+    java.lang.String id,
+    java.lang.String networkId)
   {
     this();
     this.id = id;
+    this.networkId = networkId;
   }
 
   /**
@@ -104,6 +113,9 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
   public DockerCluster(DockerCluster other) {
     if (other.isSetId()) {
       this.id = other.id;
+    }
+    if (other.isSetNetworkId()) {
+      this.networkId = other.networkId;
     }
   }
 
@@ -114,6 +126,7 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
   @Override
   public void clear() {
     this.id = null;
+    this.networkId = null;
   }
 
   @org.apache.thrift.annotation.Nullable
@@ -141,6 +154,31 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
     }
   }
 
+  @org.apache.thrift.annotation.Nullable
+  public java.lang.String getNetworkId() {
+    return this.networkId;
+  }
+
+  public DockerCluster setNetworkId(@org.apache.thrift.annotation.Nullable java.lang.String networkId) {
+    this.networkId = networkId;
+    return this;
+  }
+
+  public void unsetNetworkId() {
+    this.networkId = null;
+  }
+
+  /** Returns true if field networkId is set (has been assigned a value) and false otherwise */
+  public boolean isSetNetworkId() {
+    return this.networkId != null;
+  }
+
+  public void setNetworkIdIsSet(boolean value) {
+    if (!value) {
+      this.networkId = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
     switch (field) {
     case ID:
@@ -148,6 +186,14 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
         unsetId();
       } else {
         setId((java.lang.String)value);
+      }
+      break;
+
+    case NETWORK_ID:
+      if (value == null) {
+        unsetNetworkId();
+      } else {
+        setNetworkId((java.lang.String)value);
       }
       break;
 
@@ -159,6 +205,9 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
     switch (field) {
     case ID:
       return getId();
+
+    case NETWORK_ID:
+      return getNetworkId();
 
     }
     throw new java.lang.IllegalStateException();
@@ -173,6 +222,8 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
     switch (field) {
     case ID:
       return isSetId();
+    case NETWORK_ID:
+      return isSetNetworkId();
     }
     throw new java.lang.IllegalStateException();
   }
@@ -199,6 +250,15 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
         return false;
     }
 
+    boolean this_present_networkId = true && this.isSetNetworkId();
+    boolean that_present_networkId = true && that.isSetNetworkId();
+    if (this_present_networkId || that_present_networkId) {
+      if (!(this_present_networkId && that_present_networkId))
+        return false;
+      if (!this.networkId.equals(that.networkId))
+        return false;
+    }
+
     return true;
   }
 
@@ -209,6 +269,10 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
     hashCode = hashCode * 8191 + ((isSetId()) ? 131071 : 524287);
     if (isSetId())
       hashCode = hashCode * 8191 + id.hashCode();
+
+    hashCode = hashCode * 8191 + ((isSetNetworkId()) ? 131071 : 524287);
+    if (isSetNetworkId())
+      hashCode = hashCode * 8191 + networkId.hashCode();
 
     return hashCode;
   }
@@ -227,6 +291,16 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
     }
     if (isSetId()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, other.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = java.lang.Boolean.compare(isSetNetworkId(), other.isSetNetworkId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetNetworkId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.networkId, other.networkId);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -257,6 +331,14 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
       sb.append("null");
     } else {
       sb.append(this.id);
+    }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("networkId:");
+    if (this.networkId == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.networkId);
     }
     first = false;
     sb.append(")");
@@ -310,6 +392,14 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 2: // NETWORK_ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.networkId = iprot.readString();
+              struct.setNetworkIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -328,6 +418,11 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
       if (struct.id != null) {
         oprot.writeFieldBegin(ID_FIELD_DESC);
         oprot.writeString(struct.id);
+        oprot.writeFieldEnd();
+      }
+      if (struct.networkId != null) {
+        oprot.writeFieldBegin(NETWORK_ID_FIELD_DESC);
+        oprot.writeString(struct.networkId);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -351,19 +446,29 @@ public class DockerCluster implements org.apache.thrift.TBase<DockerCluster, Doc
       if (struct.isSetId()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetNetworkId()) {
+        optionals.set(1);
+      }
+      oprot.writeBitSet(optionals, 2);
       if (struct.isSetId()) {
         oprot.writeString(struct.id);
+      }
+      if (struct.isSetNetworkId()) {
+        oprot.writeString(struct.networkId);
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, DockerCluster struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
-      java.util.BitSet incoming = iprot.readBitSet(1);
+      java.util.BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         struct.id = iprot.readString();
         struct.setIdIsSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.networkId = iprot.readString();
+        struct.setNetworkIdIsSet(true);
       }
     }
   }

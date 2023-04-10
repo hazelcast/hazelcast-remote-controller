@@ -13,20 +13,17 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
 
   private static final org.apache.thrift.protocol.TField CONTAINER_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("containerId", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField HOST_FIELD_DESC = new org.apache.thrift.protocol.TField("host", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField PORT_FIELD_DESC = new org.apache.thrift.protocol.TField("port", org.apache.thrift.protocol.TType.I32, (short)3);
 
   private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new DockerMemberStandardSchemeFactory();
   private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new DockerMemberTupleSchemeFactory();
 
   public @org.apache.thrift.annotation.Nullable java.lang.String containerId; // required
   public @org.apache.thrift.annotation.Nullable java.lang.String host; // required
-  public int port; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     CONTAINER_ID((short)1, "containerId"),
-    HOST((short)2, "host"),
-    PORT((short)3, "port");
+    HOST((short)2, "host");
 
     private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
@@ -46,8 +43,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
           return CONTAINER_ID;
         case 2: // HOST
           return HOST;
-        case 3: // PORT
-          return PORT;
         default:
           return null;
       }
@@ -89,8 +84,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
   }
 
   // isset id assignments
-  private static final int __PORT_ISSET_ID = 0;
-  private byte __isset_bitfield = 0;
   public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -98,8 +91,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.HOST, new org.apache.thrift.meta_data.FieldMetaData("host", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.PORT, new org.apache.thrift.meta_data.FieldMetaData("port", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DockerMember.class, metaDataMap);
   }
@@ -109,28 +100,23 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
 
   public DockerMember(
     java.lang.String containerId,
-    java.lang.String host,
-    int port)
+    java.lang.String host)
   {
     this();
     this.containerId = containerId;
     this.host = host;
-    this.port = port;
-    setPortIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public DockerMember(DockerMember other) {
-    __isset_bitfield = other.__isset_bitfield;
     if (other.isSetContainerId()) {
       this.containerId = other.containerId;
     }
     if (other.isSetHost()) {
       this.host = other.host;
     }
-    this.port = other.port;
   }
 
   public DockerMember deepCopy() {
@@ -141,8 +127,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
   public void clear() {
     this.containerId = null;
     this.host = null;
-    setPortIsSet(false);
-    this.port = 0;
   }
 
   @org.apache.thrift.annotation.Nullable
@@ -195,29 +179,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
     }
   }
 
-  public int getPort() {
-    return this.port;
-  }
-
-  public DockerMember setPort(int port) {
-    this.port = port;
-    setPortIsSet(true);
-    return this;
-  }
-
-  public void unsetPort() {
-    __isset_bitfield = org.apache.thrift.EncodingUtils.clearBit(__isset_bitfield, __PORT_ISSET_ID);
-  }
-
-  /** Returns true if field port is set (has been assigned a value) and false otherwise */
-  public boolean isSetPort() {
-    return org.apache.thrift.EncodingUtils.testBit(__isset_bitfield, __PORT_ISSET_ID);
-  }
-
-  public void setPortIsSet(boolean value) {
-    __isset_bitfield = org.apache.thrift.EncodingUtils.setBit(__isset_bitfield, __PORT_ISSET_ID, value);
-  }
-
   public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
     switch (field) {
     case CONTAINER_ID:
@@ -236,14 +197,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
       }
       break;
 
-    case PORT:
-      if (value == null) {
-        unsetPort();
-      } else {
-        setPort((java.lang.Integer)value);
-      }
-      break;
-
     }
   }
 
@@ -255,9 +208,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
 
     case HOST:
       return getHost();
-
-    case PORT:
-      return getPort();
 
     }
     throw new java.lang.IllegalStateException();
@@ -274,8 +224,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
       return isSetContainerId();
     case HOST:
       return isSetHost();
-    case PORT:
-      return isSetPort();
     }
     throw new java.lang.IllegalStateException();
   }
@@ -311,15 +259,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
         return false;
     }
 
-    boolean this_present_port = true;
-    boolean that_present_port = true;
-    if (this_present_port || that_present_port) {
-      if (!(this_present_port && that_present_port))
-        return false;
-      if (this.port != that.port)
-        return false;
-    }
-
     return true;
   }
 
@@ -334,8 +273,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
     hashCode = hashCode * 8191 + ((isSetHost()) ? 131071 : 524287);
     if (isSetHost())
       hashCode = hashCode * 8191 + host.hashCode();
-
-    hashCode = hashCode * 8191 + port;
 
     return hashCode;
   }
@@ -364,16 +301,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
     }
     if (isSetHost()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.host, other.host);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = java.lang.Boolean.compare(isSetPort(), other.isSetPort());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetPort()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.port, other.port);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -414,10 +341,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
       sb.append(this.host);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("port:");
-    sb.append(this.port);
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -437,8 +360,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, java.lang.ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bitfield = 0;
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -479,14 +400,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // PORT
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.port = iprot.readI32();
-              struct.setPortIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -512,9 +425,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
         oprot.writeString(struct.host);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(PORT_FIELD_DESC);
-      oprot.writeI32(struct.port);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -539,25 +449,19 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
       if (struct.isSetHost()) {
         optionals.set(1);
       }
-      if (struct.isSetPort()) {
-        optionals.set(2);
-      }
-      oprot.writeBitSet(optionals, 3);
+      oprot.writeBitSet(optionals, 2);
       if (struct.isSetContainerId()) {
         oprot.writeString(struct.containerId);
       }
       if (struct.isSetHost()) {
         oprot.writeString(struct.host);
       }
-      if (struct.isSetPort()) {
-        oprot.writeI32(struct.port);
-      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, DockerMember struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
-      java.util.BitSet incoming = iprot.readBitSet(3);
+      java.util.BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         struct.containerId = iprot.readString();
         struct.setContainerIdIsSet(true);
@@ -565,10 +469,6 @@ public class DockerMember implements org.apache.thrift.TBase<DockerMember, Docke
       if (incoming.get(1)) {
         struct.host = iprot.readString();
         struct.setHostIsSet(true);
-      }
-      if (incoming.get(2)) {
-        struct.port = iprot.readI32();
-        struct.setPortIsSet(true);
       }
     }
   }

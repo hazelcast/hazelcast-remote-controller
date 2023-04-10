@@ -15,7 +15,7 @@ public class DockerClusterManager {
         try {
             HzDockerCluster hzDockerCluster = new HzDockerCluster(dockerImageString, xmlconfig, hazelcastEnterpriseLicenseKey);
             this.clusterMap.put(hzDockerCluster.getClusterId(), hzDockerCluster);
-            return new DockerCluster(hzDockerCluster.getClusterId());
+            return new DockerCluster(hzDockerCluster.getClusterId(), hzDockerCluster.getNetworkId());
         } catch (Exception e) {
             LOG.error(e);
             throw new ServerException(e.getMessage());
@@ -65,7 +65,7 @@ public class DockerClusterManager {
         return true;
     }
 
-    public boolean splitClusterAs(String dockerClusterId, List<DockerMember> brain1, List<DockerMember> brain2) {
+    public boolean splitClusterAs(String dockerClusterId, List<String> brain1, List<String> brain2) {
         HzDockerCluster hzCluster = this.clusterMap.get(dockerClusterId);
         if (hzCluster == null) {
             LOG.warn("Docker cluster does not exist with id: " + dockerClusterId);

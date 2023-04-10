@@ -103,7 +103,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
     }
 
     @Override
-    public boolean splitClusterAs(String dockerClusterId, List<DockerMember> brain1, List<DockerMember> brain2) throws TException {
+    public boolean splitClusterAs(String dockerClusterId, List<String> brain1, List<String> brain2) throws TException {
         return dockerClusterManager.splitClusterAs(dockerClusterId, brain1, brain2);
     }
 

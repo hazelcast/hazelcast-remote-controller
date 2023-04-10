@@ -12,23 +12,18 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.FrameConsumerResultCallback;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.ToStringConsumer;
-import org.testcontainers.containers.wait.strategy.WaitStrategy;
-import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.TestEnvironment;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -59,7 +54,8 @@ public class HzDockerCluster {
     private final String clusterId = UUID.randomUUID().toString();
     private final String dockerImageString;
     private final String xmlConfigPath;
-    private final Network network = Network.newNetwork();
+    private final String networkName = "hazelcast-network-" + clusterId;
+    private final Network network = Network.builder().createNetworkCmdModifier(cmd -> cmd.withName(networkName)).build();
     private final ConcurrentHashMap<String, GenericContainer> containers = new ConcurrentHashMap<>();
     // Holds the firewall rules that is applied via iptables to split the brain. The key is the container id and value is the
     // list of blocked ips for input for that container
@@ -124,8 +120,7 @@ public class HzDockerCluster {
             throw new RuntimeException("Container could not be started");
         }
 
-        Integer port = container.getMappedPort(5701);
-        String host = container.getHost();
+        String host = container.getContainerInfo().getNetworkSettings().getNetworks().get(networkName).getIpAddress();
         String containerId = container.getContainerId();
 
         this.containers.put(containerId, container);
@@ -138,7 +133,7 @@ public class HzDockerCluster {
             }
             throw e;
         }
-        return new DockerMember(containerId, host, port);
+        return new DockerMember(containerId, host);
     }
 
     private static PackageManager[] getPackageManagersToTry(String dockerImageString) {
@@ -229,7 +224,7 @@ public class HzDockerCluster {
         return true;
     }
 
-    public boolean splitClusterAs(List<DockerMember> brain1, List<DockerMember> brain2) {
+    public boolean splitClusterAs(List<String> brain1, List<String> brain2) {
         boolean allMembersAreInCluster;
         allMembersAreInCluster = checkMembersAreInThisCluster(brain1);
         if (!allMembersAreInCluster) {
@@ -249,13 +244,13 @@ public class HzDockerCluster {
         return true;
     }
 
-    private void splitContainersAsBrains(List<DockerMember> brain1, List<DockerMember> brain2) throws IOException, InterruptedException {
-        for (DockerMember member : brain1) {
-            GenericContainer container = this.containers.get(member.getContainerId());
+    private void splitContainersAsBrains(List<String> brain1, List<String> brain2) throws IOException, InterruptedException {
+        for (String containerId : brain1) {
+            GenericContainer container = this.containers.get(containerId);
             blockInputFromContainers(container, brain2);
         }
-        for (DockerMember member : brain2) {
-            GenericContainer container = this.containers.get(member.getContainerId());
+        for (String containerId : brain2) {
+            GenericContainer container = this.containers.get(containerId);
             blockInputFromContainers(container, brain1);
         }
     }
@@ -281,19 +276,19 @@ public class HzDockerCluster {
         this.containers.clear();
     }
 
-    private boolean checkMembersAreInThisCluster(List<DockerMember> members) {
-        for (DockerMember member : members) {
-            if (!this.containers.containsKey(member.getContainerId())) {
-                LOG.warn("Member " + member + " is not in this docker cluster");
+    private boolean checkMembersAreInThisCluster(List<String> containerIds) {
+        for (String containerId : containerIds) {
+            if (!this.containers.containsKey(containerId)) {
+                LOG.warn("Container id " + containerId + " is not in this docker cluster");
                 return false;
             }
         }
         return true;
     }
 
-    private void blockInputFromContainers(GenericContainer containerToBeAffected, List<DockerMember> dockerMembers) throws IOException, InterruptedException {
-        for (DockerMember member : dockerMembers) {
-            GenericContainer container = this.containers.get(member.getContainerId());
+    private void blockInputFromContainers(GenericContainer containerToBeAffected, List<String> containerIds) throws IOException, InterruptedException {
+        for (String containerId : containerIds) {
+            GenericContainer container = this.containers.get(containerId);
             String containerIpAddress = getContainerIpAddress(container);
             execAsRootAndThrowOnError(containerToBeAffected, "iptables", "-A", "INPUT", "-s", containerIpAddress, "-j", "DROP");
             addToBlockRule(containerToBeAffected.getContainerId(), containerIpAddress);
@@ -337,6 +332,10 @@ public class HzDockerCluster {
                     String.format("Exit code: %d, Stdout: %s, Stderr: %s", exitCode, stdout, stderr);
             throw new RuntimeException(error);
         }
+    }
+
+    public String getNetworkId() {
+        return network.getId();
     }
 
     private static ExecResult execInContainerAsRoot(GenericContainer container, String... cmd) throws IOException, InterruptedException {

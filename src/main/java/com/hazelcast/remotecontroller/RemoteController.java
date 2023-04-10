@@ -44,7 +44,7 @@ public class RemoteController {
 
     public boolean shutdownDockerMember(java.lang.String dockerClusterId, java.lang.String containerId) throws org.apache.thrift.TException;
 
-    public boolean splitClusterAs(java.lang.String dockerClusterId, java.util.List<DockerMember> brain1, java.util.List<DockerMember> brain2) throws org.apache.thrift.TException;
+    public boolean splitClusterAs(java.lang.String dockerClusterId, java.util.List<java.lang.String> brain1, java.util.List<java.lang.String> brain2) throws org.apache.thrift.TException;
 
     public boolean mergeCluster(java.lang.String dockerClusterId) throws org.apache.thrift.TException;
 
@@ -163,7 +163,7 @@ public class RemoteController {
 
     public void shutdownDockerMember(java.lang.String dockerClusterId, java.lang.String containerId, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler) throws org.apache.thrift.TException;
 
-    public void splitClusterAs(java.lang.String dockerClusterId, java.util.List<DockerMember> brain1, java.util.List<DockerMember> brain2, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler) throws org.apache.thrift.TException;
+    public void splitClusterAs(java.lang.String dockerClusterId, java.util.List<java.lang.String> brain1, java.util.List<java.lang.String> brain2, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler) throws org.apache.thrift.TException;
 
     public void mergeCluster(java.lang.String dockerClusterId, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler) throws org.apache.thrift.TException;
 
@@ -594,13 +594,13 @@ public class RemoteController {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "shutdownDockerMember failed: unknown result");
     }
 
-    public boolean splitClusterAs(java.lang.String dockerClusterId, java.util.List<DockerMember> brain1, java.util.List<DockerMember> brain2) throws org.apache.thrift.TException
+    public boolean splitClusterAs(java.lang.String dockerClusterId, java.util.List<java.lang.String> brain1, java.util.List<java.lang.String> brain2) throws org.apache.thrift.TException
     {
       send_splitClusterAs(dockerClusterId, brain1, brain2);
       return recv_splitClusterAs();
     }
 
-    public void send_splitClusterAs(java.lang.String dockerClusterId, java.util.List<DockerMember> brain1, java.util.List<DockerMember> brain2) throws org.apache.thrift.TException
+    public void send_splitClusterAs(java.lang.String dockerClusterId, java.util.List<java.lang.String> brain1, java.util.List<java.lang.String> brain2) throws org.apache.thrift.TException
     {
       splitClusterAs_args args = new splitClusterAs_args();
       args.setDockerClusterId(dockerClusterId);
@@ -1390,7 +1390,7 @@ public class RemoteController {
       }
     }
 
-    public void splitClusterAs(java.lang.String dockerClusterId, java.util.List<DockerMember> brain1, java.util.List<DockerMember> brain2, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler) throws org.apache.thrift.TException {
+    public void splitClusterAs(java.lang.String dockerClusterId, java.util.List<java.lang.String> brain1, java.util.List<java.lang.String> brain2, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       splitClusterAs_call method_call = new splitClusterAs_call(dockerClusterId, brain1, brain2, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -1399,9 +1399,9 @@ public class RemoteController {
 
     public static class splitClusterAs_call extends org.apache.thrift.async.TAsyncMethodCall<java.lang.Boolean> {
       private java.lang.String dockerClusterId;
-      private java.util.List<DockerMember> brain1;
-      private java.util.List<DockerMember> brain2;
-      public splitClusterAs_call(java.lang.String dockerClusterId, java.util.List<DockerMember> brain1, java.util.List<DockerMember> brain2, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private java.util.List<java.lang.String> brain1;
+      private java.util.List<java.lang.String> brain2;
+      public splitClusterAs_call(java.lang.String dockerClusterId, java.util.List<java.lang.String> brain1, java.util.List<java.lang.String> brain2, org.apache.thrift.async.AsyncMethodCallback<java.lang.Boolean> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.dockerClusterId = dockerClusterId;
         this.brain1 = brain1;
@@ -16993,8 +16993,8 @@ public class RemoteController {
     private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new splitClusterAs_argsTupleSchemeFactory();
 
     public @org.apache.thrift.annotation.Nullable java.lang.String dockerClusterId; // required
-    public @org.apache.thrift.annotation.Nullable java.util.List<DockerMember> brain1; // required
-    public @org.apache.thrift.annotation.Nullable java.util.List<DockerMember> brain2; // required
+    public @org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> brain1; // required
+    public @org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> brain2; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -17070,10 +17070,10 @@ public class RemoteController {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.BRAIN1, new org.apache.thrift.meta_data.FieldMetaData("brain1", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DockerMember.class))));
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
       tmpMap.put(_Fields.BRAIN2, new org.apache.thrift.meta_data.FieldMetaData("brain2", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DockerMember.class))));
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
       metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(splitClusterAs_args.class, metaDataMap);
     }
@@ -17083,8 +17083,8 @@ public class RemoteController {
 
     public splitClusterAs_args(
       java.lang.String dockerClusterId,
-      java.util.List<DockerMember> brain1,
-      java.util.List<DockerMember> brain2)
+      java.util.List<java.lang.String> brain1,
+      java.util.List<java.lang.String> brain2)
     {
       this();
       this.dockerClusterId = dockerClusterId;
@@ -17100,17 +17100,11 @@ public class RemoteController {
         this.dockerClusterId = other.dockerClusterId;
       }
       if (other.isSetBrain1()) {
-        java.util.List<DockerMember> __this__brain1 = new java.util.ArrayList<DockerMember>(other.brain1.size());
-        for (DockerMember other_element : other.brain1) {
-          __this__brain1.add(new DockerMember(other_element));
-        }
+        java.util.List<java.lang.String> __this__brain1 = new java.util.ArrayList<java.lang.String>(other.brain1);
         this.brain1 = __this__brain1;
       }
       if (other.isSetBrain2()) {
-        java.util.List<DockerMember> __this__brain2 = new java.util.ArrayList<DockerMember>(other.brain2.size());
-        for (DockerMember other_element : other.brain2) {
-          __this__brain2.add(new DockerMember(other_element));
-        }
+        java.util.List<java.lang.String> __this__brain2 = new java.util.ArrayList<java.lang.String>(other.brain2);
         this.brain2 = __this__brain2;
       }
     }
@@ -17156,23 +17150,23 @@ public class RemoteController {
     }
 
     @org.apache.thrift.annotation.Nullable
-    public java.util.Iterator<DockerMember> getBrain1Iterator() {
+    public java.util.Iterator<java.lang.String> getBrain1Iterator() {
       return (this.brain1 == null) ? null : this.brain1.iterator();
     }
 
-    public void addToBrain1(DockerMember elem) {
+    public void addToBrain1(java.lang.String elem) {
       if (this.brain1 == null) {
-        this.brain1 = new java.util.ArrayList<DockerMember>();
+        this.brain1 = new java.util.ArrayList<java.lang.String>();
       }
       this.brain1.add(elem);
     }
 
     @org.apache.thrift.annotation.Nullable
-    public java.util.List<DockerMember> getBrain1() {
+    public java.util.List<java.lang.String> getBrain1() {
       return this.brain1;
     }
 
-    public splitClusterAs_args setBrain1(@org.apache.thrift.annotation.Nullable java.util.List<DockerMember> brain1) {
+    public splitClusterAs_args setBrain1(@org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> brain1) {
       this.brain1 = brain1;
       return this;
     }
@@ -17197,23 +17191,23 @@ public class RemoteController {
     }
 
     @org.apache.thrift.annotation.Nullable
-    public java.util.Iterator<DockerMember> getBrain2Iterator() {
+    public java.util.Iterator<java.lang.String> getBrain2Iterator() {
       return (this.brain2 == null) ? null : this.brain2.iterator();
     }
 
-    public void addToBrain2(DockerMember elem) {
+    public void addToBrain2(java.lang.String elem) {
       if (this.brain2 == null) {
-        this.brain2 = new java.util.ArrayList<DockerMember>();
+        this.brain2 = new java.util.ArrayList<java.lang.String>();
       }
       this.brain2.add(elem);
     }
 
     @org.apache.thrift.annotation.Nullable
-    public java.util.List<DockerMember> getBrain2() {
+    public java.util.List<java.lang.String> getBrain2() {
       return this.brain2;
     }
 
-    public splitClusterAs_args setBrain2(@org.apache.thrift.annotation.Nullable java.util.List<DockerMember> brain2) {
+    public splitClusterAs_args setBrain2(@org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> brain2) {
       this.brain2 = brain2;
       return this;
     }
@@ -17247,7 +17241,7 @@ public class RemoteController {
         if (value == null) {
           unsetBrain1();
         } else {
-          setBrain1((java.util.List<DockerMember>)value);
+          setBrain1((java.util.List<java.lang.String>)value);
         }
         break;
 
@@ -17255,7 +17249,7 @@ public class RemoteController {
         if (value == null) {
           unsetBrain2();
         } else {
-          setBrain2((java.util.List<DockerMember>)value);
+          setBrain2((java.util.List<java.lang.String>)value);
         }
         break;
 
@@ -17494,12 +17488,11 @@ public class RemoteController {
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
                   org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                  struct.brain1 = new java.util.ArrayList<DockerMember>(_list0.size);
-                  @org.apache.thrift.annotation.Nullable DockerMember _elem1;
+                  struct.brain1 = new java.util.ArrayList<java.lang.String>(_list0.size);
+                  @org.apache.thrift.annotation.Nullable java.lang.String _elem1;
                   for (int _i2 = 0; _i2 < _list0.size; ++_i2)
                   {
-                    _elem1 = new DockerMember();
-                    _elem1.read(iprot);
+                    _elem1 = iprot.readString();
                     struct.brain1.add(_elem1);
                   }
                   iprot.readListEnd();
@@ -17513,12 +17506,11 @@ public class RemoteController {
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
                   org.apache.thrift.protocol.TList _list3 = iprot.readListBegin();
-                  struct.brain2 = new java.util.ArrayList<DockerMember>(_list3.size);
-                  @org.apache.thrift.annotation.Nullable DockerMember _elem4;
+                  struct.brain2 = new java.util.ArrayList<java.lang.String>(_list3.size);
+                  @org.apache.thrift.annotation.Nullable java.lang.String _elem4;
                   for (int _i5 = 0; _i5 < _list3.size; ++_i5)
                   {
-                    _elem4 = new DockerMember();
-                    _elem4.read(iprot);
+                    _elem4 = iprot.readString();
                     struct.brain2.add(_elem4);
                   }
                   iprot.readListEnd();
@@ -17551,10 +17543,10 @@ public class RemoteController {
         if (struct.brain1 != null) {
           oprot.writeFieldBegin(BRAIN1_FIELD_DESC);
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.brain1.size()));
-            for (DockerMember _iter6 : struct.brain1)
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.brain1.size()));
+            for (java.lang.String _iter6 : struct.brain1)
             {
-              _iter6.write(oprot);
+              oprot.writeString(_iter6);
             }
             oprot.writeListEnd();
           }
@@ -17563,10 +17555,10 @@ public class RemoteController {
         if (struct.brain2 != null) {
           oprot.writeFieldBegin(BRAIN2_FIELD_DESC);
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.brain2.size()));
-            for (DockerMember _iter7 : struct.brain2)
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.brain2.size()));
+            for (java.lang.String _iter7 : struct.brain2)
             {
-              _iter7.write(oprot);
+              oprot.writeString(_iter7);
             }
             oprot.writeListEnd();
           }
@@ -17606,18 +17598,18 @@ public class RemoteController {
         if (struct.isSetBrain1()) {
           {
             oprot.writeI32(struct.brain1.size());
-            for (DockerMember _iter8 : struct.brain1)
+            for (java.lang.String _iter8 : struct.brain1)
             {
-              _iter8.write(oprot);
+              oprot.writeString(_iter8);
             }
           }
         }
         if (struct.isSetBrain2()) {
           {
             oprot.writeI32(struct.brain2.size());
-            for (DockerMember _iter9 : struct.brain2)
+            for (java.lang.String _iter9 : struct.brain2)
             {
-              _iter9.write(oprot);
+              oprot.writeString(_iter9);
             }
           }
         }
@@ -17633,13 +17625,12 @@ public class RemoteController {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list10 = iprot.readListBegin(org.apache.thrift.protocol.TType.STRUCT);
-            struct.brain1 = new java.util.ArrayList<DockerMember>(_list10.size);
-            @org.apache.thrift.annotation.Nullable DockerMember _elem11;
+            org.apache.thrift.protocol.TList _list10 = iprot.readListBegin(org.apache.thrift.protocol.TType.STRING);
+            struct.brain1 = new java.util.ArrayList<java.lang.String>(_list10.size);
+            @org.apache.thrift.annotation.Nullable java.lang.String _elem11;
             for (int _i12 = 0; _i12 < _list10.size; ++_i12)
             {
-              _elem11 = new DockerMember();
-              _elem11.read(iprot);
+              _elem11 = iprot.readString();
               struct.brain1.add(_elem11);
             }
           }
@@ -17647,13 +17638,12 @@ public class RemoteController {
         }
         if (incoming.get(2)) {
           {
-            org.apache.thrift.protocol.TList _list13 = iprot.readListBegin(org.apache.thrift.protocol.TType.STRUCT);
-            struct.brain2 = new java.util.ArrayList<DockerMember>(_list13.size);
-            @org.apache.thrift.annotation.Nullable DockerMember _elem14;
+            org.apache.thrift.protocol.TList _list13 = iprot.readListBegin(org.apache.thrift.protocol.TType.STRING);
+            struct.brain2 = new java.util.ArrayList<java.lang.String>(_list13.size);
+            @org.apache.thrift.annotation.Nullable java.lang.String _elem14;
             for (int _i15 = 0; _i15 < _list13.size; ++_i15)
             {
-              _elem14 = new DockerMember();
-              _elem14.read(iprot);
+              _elem14 = iprot.readString();
               struct.brain2.add(_elem14);
             }
           }
