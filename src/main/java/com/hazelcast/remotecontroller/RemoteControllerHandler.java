@@ -15,7 +15,7 @@ public class RemoteControllerHandler implements RemoteController.Iface {
 
     private final ClusterManager clusterManager;
     private final DockerClusterManager dockerClusterManager;
-    private HazelcastCloudManager cloudManager;
+    private CloudManager cloudManager;
 
     public RemoteControllerHandler() {
         this.clusterManager = new ClusterManager();
