@@ -31,9 +31,6 @@ public class CloudManager {
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 10;
     private static final int RETRY_TIME_IN_SECOND = 10;
-    // This ID is needed to create a cluster from now on. 3 is hard coded value that is used by cloud team right now
-    // on api.dev.viridian.cloud. If it changes in the future, we need to change this as well.
-    private static final int KUBERNETES_CLUSTER_ID = 3;
     private static final int CLUSTER_TYPE_ID = 5; // Serverless cluster
     private static final int CLOUD_PROVIDER_ID = 1; // aws
     private static final int CLOUD_PROVIDER_REGION_ID = 4; // us-west-2
@@ -83,8 +80,24 @@ public class CloudManager {
         }
     }
 
+    private int getKubernetesClusterId() throws CloudException {
+        try {
+            Response response = sendGetRequest("/kubernetes_clusters/available");
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new CloudException(String.format("Response body is null while getting available kubernetes cluster ids: %s", response));
+            }
+            String responseString = responseBody.string();
+            throwIfResponseFailed(response, responseString);
+            return Integer.parseInt(mapper.readTree(responseString).get(0).get("id").asText());
+        } catch (Exception e) {
+            throw new CloudException("Getting kubernetes cluster id failed. " + getErrorString(e));
+        }
+    }
+
     public CloudCluster createCloudCluster(String hazelcastVersion, boolean isTlsEnabled) throws CloudException {
         String clusterId = "";
+        int kubernetesClusterId = getKubernetesClusterId();
         try {
             String clusterName = "test-cluster-" + UUID.randomUUID();
             String jsonString = String.format("{" +
@@ -97,7 +110,7 @@ public class CloudManager {
                             "  \"hazelcastVersion\": \"%s\"," +
                             "  \"tlsEnabled\": %b" +
                             "}",
-                    KUBERNETES_CLUSTER_ID,
+                    kubernetesClusterId,
                     clusterName,
                     CLUSTER_TYPE_ID,
                     CLOUD_PROVIDER_ID,
