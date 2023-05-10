@@ -31,6 +31,9 @@ public class CloudManager {
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final int TIMEOUT_FOR_CLUSTER_STATE_WAIT_IN_MINUTES = 10;
     private static final int RETRY_TIME_IN_SECOND = 10;
+    // This ID is needed to create a cluster from now on. 3 is hard coded value that is used by cloud team right now
+    // on api.dev.viridian.cloud. If it changes in the future, we need to change this as well.
+    private static final int KUBERNETES_CLUSTER_ID = 3;
     private static final int CLUSTER_TYPE_ID = 5; // Serverless cluster
     private static final int CLOUD_PROVIDER_ID = 1; // aws
     private static final int CLOUD_PROVIDER_REGION_ID = 4; // us-west-2
@@ -85,6 +88,7 @@ public class CloudManager {
         try {
             String clusterName = "test-cluster-" + UUID.randomUUID();
             String jsonString = String.format("{" +
+                            "  \"kubernetesClusterId\": %d," +
                             "  \"name\": \"%s\"," +
                             "  \"clusterTypeId\": %d," + // Serverless cluster
                             "  \"cloudProviders\": [%d]," + // aws
@@ -93,6 +97,7 @@ public class CloudManager {
                             "  \"hazelcastVersion\": \"%s\"," +
                             "  \"tlsEnabled\": %b" +
                             "}",
+                    KUBERNETES_CLUSTER_ID,
                     clusterName,
                     CLUSTER_TYPE_ID,
                     CLOUD_PROVIDER_ID,
