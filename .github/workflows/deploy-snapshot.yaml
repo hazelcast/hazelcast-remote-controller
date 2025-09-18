@@ -8,7 +8,7 @@ on:
   # TODO REMOVE
   pull_request:
 jobs:
-  release:
+  deploy:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'hazelcast'
 
@@ -22,7 +22,7 @@ jobs:
           server-username: ${{ secrets.JFROG_USERNAME }}
           server-password: ${{ secrets.JFROG_PASSWORD }}
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
           cache: 'maven'
       - run: |
           PROJECT_VERSION=$(mvn --quiet help:evaluate -Dexpression='project.version' -DforceStdout)
@@ -30,6 +30,7 @@ jobs:
             mvn -Prelease deploy
           fi
         env:
+            MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
             MAVEN_ARGS: >-
                 --batch-mode
                 --no-transfer-progress
