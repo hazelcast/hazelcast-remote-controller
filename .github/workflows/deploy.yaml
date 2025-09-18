@@ -1,19 +1,20 @@
 
-name: Deploy snapshots
+name: Deploy
 on:
   push:
     branches:
       - master
+    tags:
+      - 'v*'
   workflow_dispatch:
-  # TODO REMOVE
-  pull_request:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'hazelcast'
-
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-java@v5
         with:
           java-version: 17
@@ -24,15 +25,14 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
           cache: 'maven'
+
       - run: |
-          PROJECT_VERSION=$(mvn --quiet help:evaluate -Dexpression='project.version' -DforceStdout)
-          if [[ "$PROJECT_VERSION" == *-SNAPSHOT ]]; then
-            mvn -Prelease deploy
-          fi
+          mvn \
+            deploy \
+            --activate-profiles release \
+            --batch-mode \
+            --no-transfer-progress
         env:
-            MAVEN_USERNAME: ${{ secrets.JFROG_USERNAME }}
-            MAVEN_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-            MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-            MAVEN_ARGS: >-
-                --batch-mode
-                --no-transfer-progress
+          MAVEN_USERNAME: ${{ secrets.JFROG_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
