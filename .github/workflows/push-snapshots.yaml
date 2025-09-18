@@ -31,4 +31,6 @@ jobs:
             mvn -Prelease deploy
           fi
         env:
-            MAVEN_ARGS: --batch-mode
+            MAVEN_ARGS: >-
+                --batch-mode
+                --no-transfer-progress
