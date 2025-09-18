@@ -12,18 +12,7 @@
 
     <repositories>
         <repository>
-            <id>snapshot-repository</id>
-            <name>Maven2 Snapshot Repository</name>
-            <url>https://central.sonatype.com/repository/maven-snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>private-repository</id>
+            <id>hazelcast-private-repository</id>
             <name>Hazelcast Private Repository</name>
             <url>https://repository.hazelcast.com/release/</url>
             <releases>
@@ -31,6 +20,17 @@
             </releases>
             <snapshots>
                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>hazelcast-private-snapshot-repository</id>
+            <name>Hazelcast Private Repository</name>
+            <url>https://repository.hazelcast.com/snapshot/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -223,14 +223,12 @@
     </dependencies>
     <distributionManagement>
         <repository>
-            <id>ossrh</id>
-            <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
+            <id>deploy-repository</id>
+            <url>https://repository.hazelcast.com/release</url>
         </repository>
         <snapshotRepository>
-            <id>ossrh</id>
-            <name>Maven2 Snapshot Repository</name>
-            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-            <uniqueVersion>false</uniqueVersion>
+            <id>deploy-repository</id>
+            <url>https://repository.hazelcast.com/snapshot</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -239,17 +237,6 @@
             <id>release</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.7.0</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://ossrh-staging-api.central.sonatype.com/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
