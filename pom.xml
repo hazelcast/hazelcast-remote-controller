@@ -56,7 +56,7 @@
         <hamcrest.version>1.3</hamcrest.version>
         <hazelcast.version>4.0</hazelcast.version>
         <thrift.version>0.13.0</thrift.version>
-        <jackson-databind.version>2.12.3</jackson-databind.version>
+        <jackson-databind.version>2.12.7.1</jackson-databind.version>
         <zip4j.version>2.9.1</zip4j.version>
         <okhttp.version>3.9.0</okhttp.version>
         <nashorn-core.version>15.4</nashorn-core.version>
