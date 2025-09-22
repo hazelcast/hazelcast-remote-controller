@@ -57,7 +57,7 @@
         <hazelcast.version>4.0</hazelcast.version>
         <thrift.version>0.13.0</thrift.version>
         <jackson-databind.version>2.12.3</jackson-databind.version>
-        <zip4j.version>2.9.1</zip4j.version>
+        <zip4j.version>2.11.3</zip4j.version>
         <okhttp.version>3.9.0</okhttp.version>
         <nashorn-core.version>15.4</nashorn-core.version>
         <jython-standalone.version>2.7.2</jython-standalone.version>
