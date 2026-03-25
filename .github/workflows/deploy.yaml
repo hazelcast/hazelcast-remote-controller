@@ -12,6 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Should be a relative local path, but doesn't resolve when called from another repo
+      - uses: hazelcast/docker-actions/get-jfrog-credentials@master
+        id: jfrog
+        with:
+          aws-role-to-assume: ${{ secrets.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          jfrog-oidc-provider-name: ${{ github.repository_owner }}-write-dev-account
+
       - uses: actions/setup-java@v5
         with:
           java-version: 17
@@ -30,6 +37,6 @@ jobs:
             --batch-mode \
             --no-transfer-progress
         env:
-          MAVEN_USERNAME: ${{ secrets.JFROG_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+          MAVEN_USERNAME: ${{ steps.jfrog.outputs.user }}
+          MAVEN_PASSWORD: ${{ steps.jfrog.outputs.token }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
