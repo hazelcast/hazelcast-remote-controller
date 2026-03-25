@@ -14,12 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: hazelcast/docker-actions/get-jfrog-credentials@master
-        id: jfrog
-        with:
-          aws-role-to-assume: ${{ secrets.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
-          jfrog-oidc-provider-name: ${{ github.repository_owner }}-write-dev-account
-
       - uses: actions/setup-java@v5
         with:
           java-version: 17
@@ -30,6 +24,12 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
           cache: 'maven'
+
+      - uses: hazelcast/docker-actions/get-jfrog-credentials@master
+        id: jfrog
+        with:
+          aws-role-to-assume: ${{ secrets.AWS_HAZELCAST_OIDC_GITHUB_ACTIONS_ROLE_ARN }}
+          jfrog-oidc-provider-name: ${{ github.repository_owner }}-write-dev-account
 
       - run: |
           mvn \
