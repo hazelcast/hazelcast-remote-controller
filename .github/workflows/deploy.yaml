@@ -12,7 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Should be a relative local path, but doesn't resolve when called from another repo
       - uses: hazelcast/docker-actions/get-jfrog-credentials@master
         id: jfrog
         with:
