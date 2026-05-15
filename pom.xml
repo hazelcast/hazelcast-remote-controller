@@ -12,12 +12,7 @@
 
     <repositories>
         <repository>
-            <id>snapshot-repository</id>
-            <name>Maven2 Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </repository>
-        <repository>
-            <id>private-repository</id>
+            <id>hazelcast-private-repository</id>
             <name>Hazelcast Private Repository</name>
             <url>https://repository.hazelcast.com/release/</url>
             <releases>
@@ -25,6 +20,17 @@
             </releases>
             <snapshots>
                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>hazelcast-private-snapshot-repository</id>
+            <name>Hazelcast Private Repository</name>
+            <url>https://repository.hazelcast.com/snapshot/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -64,14 +70,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <developers>
-        <developer>
-            <id>asimarslan</id>
-            <name>asim arslan</name>
-            <email>asim@hazelcast.com</email>
-        </developer>
-    </developers>
 
     <organization>
         <name>Hazelcast, Inc.</name>
@@ -225,16 +223,42 @@
     </dependencies>
     <distributionManagement>
         <repository>
-            <id>release-repository</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+            <id>deploy-repository</id>
+            <url>https://repository.hazelcast.com/release</url>
         </repository>
         <snapshotRepository>
-            <id>snapshot-repository</id>
-            <name>Maven2 Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <uniqueVersion>false</uniqueVersion>
+            <id>deploy-repository</id>
+            <url>https://repository.hazelcast.com/snapshot</url>
         </snapshotRepository>
     </distributionManagement>
 
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <gpgArgument>--pinentry-mode</gpgArgument>
+                                <gpgArgument>loopback</gpgArgument>
+                            </gpgArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
 
