@@ -168,7 +168,7 @@ public class CloudManager {
                     throw new CloudException(String.format("Cluster with id %s is not found", clusterId));
                 }
                 boolean tlsEnabled = rootNode.get("tlsEnabled").asBoolean();
-                CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), rootNode.get("name").asText(), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
+                CloudCluster cluster = new CloudCluster(rootNode.get("id").asText(), rootNode.get("name").asText(), rootNode.get("hazelcastVersion").asText(), tlsEnabled, rootNode.get("state").asText(), rootNode.get("tokens").elements().next().get("token").asText(), null, null);
                 if (tlsEnabled && setupTls) {
                     cluster.setCertificatePath(downloadCertificatesAndGetPath(cluster.getId()));
                     cluster.setTlsPassword(getTlsPassword(cluster.getId()));
